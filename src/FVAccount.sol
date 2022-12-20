@@ -4,27 +4,17 @@ pragma solidity ^0.8.17;
 import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
 
-contract FVAccount is LSP0ERC725Account {
-  constructor(address _newOwner) LSP0ERC725Account(_newOwner) {
-  }
-}
-
-contract FVKeyManager is LSP6KeyManager {
-  constructor(address target) LSP6KeyManager(target) {
-  }
-}
-
 contract FVAccountRegistry {
-  FVAccount immutable public fvAccount;
-  FVKeyManager immutable public fvKeyManager;
+  LSP0ERC725Account immutable public fvAccount;
+  LSP6KeyManager immutable public fvKeyManager;
 
   mapping(address => address) public accounts;
 
   event AccountRegistered(address indexed account);
 
   constructor() {
-    fvAccount = new FVAccount(address(this));
-    fvKeyManager = new FVKeyManager(address(fvAccount));
+    fvAccount = new LSP0ERC725Account(address(this));
+    fvKeyManager = new LSP6KeyManager(address(fvAccount));
   }
 
   function identityOf(address addr) public view returns (address) {
@@ -84,8 +74,8 @@ contract FVAccountRegistry {
 
   function register(address addr) public {
     if (accounts[addr] != address(0)) return;
-    FVAccount acc = new FVAccount(address(this));
-    FVKeyManager kmgr = new FVKeyManager(address(acc));
+    LSP0ERC725Account acc = new LSP0ERC725Account(address(this));
+    LSP6KeyManager kmgr = new LSP6KeyManager(address(acc));
 
     // temporarily give SUPER permissions to self
     acc.setData(
