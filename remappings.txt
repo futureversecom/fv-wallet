@@ -3,3 +3,4 @@ forge-std/=lib/forge-std/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @lukso/lsp-smart-contracts/=lib/lsp-smart-contracts/
 @erc725/smart-contracts/=lib/ERC725/implementations/
+solidity-bytes-utils/=lib/solidity-bytes-utils/
