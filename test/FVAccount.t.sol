@@ -56,8 +56,7 @@ contract FVAccountRegistryTest is Test {
     address userKeyManagerAddr = fvAccountRegistry.register(address(this));
     assertTrue(userKeyManagerAddr != address(0));
 
-    LSP6KeyManager userKeyManager = LSP6KeyManager(userKeyManagerAddr);
-    assertTrue(userKeyManager.target() != address(0));
+    assertEq(fvAccountRegistry.identityOf(address(this)), userKeyManagerAddr); 
   }
 
   function testRegisterFailsForMultipleRegistrations() public {
