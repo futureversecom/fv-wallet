@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 import {FVAccountRegistry, AccountAlreadyExists, Utils} from "../src/FVAccount.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -80,6 +81,25 @@ contract FVAccountRegistryTest is Test {
       mintCall
     );
     LSP6KeyManager(userKeyManagerAddr).execute(executeCall);
+
+    assertEq(mockERC20.balanceOf(address(this)), 100);
+  }
+
+  function testOptimizedRegistration() public {
+    address userKeyManagerAddr = fvAccountRegistry.registerOptimized(address(this));
+
+    // abi encoded call to mint 100 tokens to address(this)
+    bytes memory mintCall = abi.encodeWithSelector(mockERC20.mint.selector, address(this), 100);
+
+    // abi encoded call to execute mint call
+    bytes memory executeCall = abi.encodeWithSignature(
+      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+      0,
+      address(mockERC20),
+      0,
+      mintCall
+    );
+    LSP6KeyManagerInit(userKeyManagerAddr).execute(executeCall);
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
