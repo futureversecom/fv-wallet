@@ -4,7 +4,8 @@ pragma solidity ^0.8.17;
 import "forge-std/Test.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
-import {FVAccountRegistry, AccountAlreadyExists, Utils} from "../src/FVAccount.sol";
+
+import {FVAccountRegistry, AccountAlreadyExists, Utils} from "../src/FVAccount2.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MockERC20 is ERC20 {
@@ -14,7 +15,7 @@ contract MockERC20 is ERC20 {
   }
 }
 
-contract FVAccountRegistryTest is Test {
+contract FVAccount2RegistryTest is Test {
   FVAccountRegistry public fvAccountRegistry;
   MockERC20 public mockERC20;
 
@@ -32,11 +33,11 @@ contract FVAccountRegistryTest is Test {
 
   function testFVAccountRegistryHasNoPermissions() public {
     bytes memory registryPermissions = fvAccountRegistry.fvAccount().getData(Utils.permissionsKey(address(fvAccountRegistry)));
-    assertEq(registryPermissions, Utils.toBytes(fvAccountRegistry.NO_PERMISSION()));
+    assertEq(registryPermissions, bytes(""));
   }
 
   function testFVAccountOwnerIsKeyManager() public {
-    assertEq(fvAccountRegistry.fvAccount().owner(), address(fvAccountRegistry.fvKeyManager()));
+    assertEq(fvAccountRegistry.fvAccount().owner(), address(0));
   }
 
   function testRegisterOfZeroAddress() public {
@@ -81,25 +82,6 @@ contract FVAccountRegistryTest is Test {
       mintCall
     );
     LSP6KeyManager(userKeyManagerAddr).execute(executeCall);
-
-    assertEq(mockERC20.balanceOf(address(this)), 100);
-  }
-
-  function testOptimizedRegistration() public {
-    address userKeyManagerAddr = fvAccountRegistry.registerOptimized(address(this));
-
-    // abi encoded call to mint 100 tokens to address(this)
-    bytes memory mintCall = abi.encodeWithSelector(mockERC20.mint.selector, address(this), 100);
-
-    // abi encoded call to execute mint call
-    bytes memory executeCall = abi.encodeWithSignature(
-      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-      0,
-      address(mockERC20),
-      0,
-      mintCall
-    );
-    LSP6KeyManagerInit(userKeyManagerAddr).execute(executeCall);
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
