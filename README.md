@@ -47,7 +47,27 @@ note: This bytes4 interface id is calculated as the XOR of the interfaceId of th
 
 - Additional docs: https://docs.lukso.tech/standards/universal-profile/lsp0-erc725account/#what-does-this-standard-represent-
 
-## Testing
+## Setup
+
+### Pre-requisites
+
+- [foundry](https://book.getfoundry.sh/getting-started/installation) must be installed
+
+### Install, Build, Test
+
+Retrieve git submodules:
+
+```sh
+forge install
+```
+
+Build contracts:
+
+```sh
+forge build
+```
+
+Run tests:
 
 ```sh
 forge test
