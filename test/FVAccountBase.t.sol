@@ -12,6 +12,8 @@ import {IERC725Y} from "@erc725/smart-contracts/contracts/interfaces/IERC725Y.so
 import {IFVAccountRegistry} from "../src/IFVAccountRegistry.sol";
 import "../src/Utils.sol";
 
+import "./helpers/GasHelper.t.sol";
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MockERC20 is ERC20 {
   constructor() ERC20("MyToken", "MTK") {}
@@ -26,7 +28,7 @@ interface FVAccountWrapper is IERC725Y {
     function owner() external view returns (address);
 }
 
-abstract contract FVAccountRegistryBaseTest is Test {
+abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
   IFVAccountRegistry public fvAccountRegistry;
   MockERC20 public mockERC20;
 
@@ -65,7 +67,9 @@ abstract contract FVAccountRegistryBaseTest is Test {
 
     emit AccountRegistered(address(this));
 
+    startMeasuringGas("fvAccountRegistry.register(address(this)) success");
     address userKeyManagerAddr = fvAccountRegistry.register(address(this));
+    stopMeasuringGas();
     assertTrue(userKeyManagerAddr != address(0));
 
     assertEq(fvAccountRegistry.identityOf(address(this)), userKeyManagerAddr); 
@@ -74,7 +78,9 @@ abstract contract FVAccountRegistryBaseTest is Test {
   function testRegisterFailsForMultipleRegistrations() public {
     fvAccountRegistry.register(address(this));
     vm.expectRevert(abi.encodeWithSelector(AccountAlreadyExists.selector, address(this)));
+    startMeasuringGas("fvAccountRegistry.register(address(this)) fail second acc");
     fvAccountRegistry.register(address(this));
+    stopMeasuringGas();
   }
 
   function testRegisteredUserCanCallExternalContract() public {
@@ -130,19 +136,23 @@ abstract contract FVAccountRegistryBaseTest is Test {
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
     // Give call permission
-    userKeyManager.execute(
-      abi.encodeWithSelector(
+    bytes memory execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
         Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_CALL) // Call only
-    ));
+    );
+    startMeasuringGas("userKeyManager.execute() add call permission");
+    userKeyManager.execute(execData);
+    stopMeasuringGas();
     // Give allowed calls permissions to wrong contract
-    userKeyManager.execute(
-      abi.encodeWithSelector(
+    execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
         Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
         Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(gameAddr)), "ffffffff"))
-      ));
+    );
+    startMeasuringGas("userKeyManager.execute() add call contract permission");
+    userKeyManager.execute(execData);
+    stopMeasuringGas();
 
     vm.prank(gameAddr);
     vm.expectRevert(abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mint.selector));
@@ -154,23 +164,24 @@ abstract contract FVAccountRegistryBaseTest is Test {
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
     // Give call permission
-    userKeyManager.execute(
-      abi.encodeWithSelector(
+    bytes memory execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
         Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_CALL) // Call only
-    ));
+    );
+    userKeyManager.execute(execData);
     // Give allowed calls permissions
-    userKeyManager.execute(
-      abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
-        Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff"))
-      ));
-
+    execData = abi.encodeWithSelector(
+      bytes4(keccak256("setData(bytes32,bytes)")),
+      Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+      Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff"))
+    );
+    userKeyManager.execute(execData);
 
     vm.prank(gameAddr);
+    startMeasuringGas("userKeyManager.execute() call erc20 mint");
     userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    stopMeasuringGas();
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
@@ -181,24 +192,27 @@ abstract contract FVAccountRegistryBaseTest is Test {
     MockERC20 mockERC20B = new MockERC20();
 
     // Give call permission
-    userKeyManager.execute(
-      abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
-        Utils.toBytes(_PERMISSION_CALL) // Call only
-    ));
+    bytes memory execData = abi.encodeWithSelector(
+      bytes4(keccak256("setData(bytes32,bytes)")),
+      Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
+      Utils.toBytes(_PERMISSION_CALL) // Call only
+    );
+    userKeyManager.execute(execData);
     // Give allowed calls permissions
-    userKeyManager.execute(
-      abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
-        Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff", "1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20B)), "ffffffff"))
-      ));
-
+    execData = abi.encodeWithSelector(
+      bytes4(keccak256("setData(bytes32,bytes)")),
+      Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+      Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff", "1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20B)), "ffffffff"))
+    );
+    userKeyManager.execute(execData);
 
     vm.prank(gameAddr);
+    startMeasuringGas("userKeyManager.execute() call erc20 mint");
     userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    stopMeasuringGas();
+    startMeasuringGas("userKeyManager.execute() call erc20 mint b");
     userKeyManager.execute(createTestERC20ExecuteData(mockERC20B));
+    stopMeasuringGas();
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
     assertEq(mockERC20B.balanceOf(address(this)), 100);
