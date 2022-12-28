@@ -11,17 +11,14 @@ contract FVAccountRegistry2Test is FVAccountRegistryBaseTest {
     super.setUp();
   }
 
-  // NOT CONSISTENT
-
-  function testFVAccountRegistryHasNoPermissions() public override {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(address(fvAccountRegistry)));
-    assertEq(registryPermissions, bytes(""));
-  }
-
-  function testFVAccountOwnerIsKeyManager() public override {
+  function testFVAccountOwnerIsZeroAddress() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertEq(fvAccount.owner(), address(0));
   }
 
+  function testFVAccountRegistryHasNoPermissions() public {
+    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
+    bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(address(fvAccountRegistry)));
+    assertEq(registryPermissions, bytes(""));
+  }
 }

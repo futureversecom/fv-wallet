@@ -33,20 +33,9 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
     mockERC20 = new MockERC20();
   }
 
-  function testFVAccountRegistryIsNotFVAccountOwner() public {
+  function testFVAccountRegistryIsNotFVAccountOwner() public virtual {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertFalse(fvAccount.owner() == address(fvAccountRegistry));
-  }
-
-  function testFVAccountRegistryHasNoPermissions() public virtual {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(address(fvAccountRegistry)));
-    assertEq(registryPermissions, Utils.toBytes(NO_PERMISSION));
-  }
-
-  function testFVAccountOwnerIsKeyManager() public virtual {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    assertEq(fvAccount.owner(), fvAccountRegistry.fvKeyManagerAddr());
   }
 
   function testRegisterOfZeroAddress() public {
