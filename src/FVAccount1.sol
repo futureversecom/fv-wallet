@@ -43,6 +43,14 @@ contract FVAccountRegistry is IFVAccountRegistry {
     );
   }
 
+  function fvAccountAddr() external view returns (address) {
+    return address(fvAccount);
+  }
+
+  function fvKeyManagerAddr() external view returns (address) {
+    return address(fvKeyManager);
+  }
+
   function identityOf(address _addr) public view returns (address) {
     return accounts[_addr];
   }
@@ -80,12 +88,5 @@ contract FVAccountRegistry is IFVAccountRegistry {
     emit AccountRegistered(_addr);
 
     return address(kmgr);
-  }
-
-  function fvAccountAddr() external view returns (address) {
-    return address(fvAccount);
-  }
-  function fvKeyManagerAddr() external view returns (address) {
-    return address(fvKeyManager);
   }
 }

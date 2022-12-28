@@ -22,12 +22,6 @@ contract MockERC20 is ERC20 {
   }
 }
 
-// Wrap an interface so we can make the test suite common.
-// We do this because LSP0ERC725Account and LSP0ERC725AccountInit don't have a common interface grr
-interface FVAccountWrapper is IERC725Y {
-    function owner() external view returns (address);
-}
-
 abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
   IFVAccountRegistry public fvAccountRegistry;
   MockERC20 public mockERC20;
@@ -40,16 +34,19 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
   }
 
   function testFVAccountRegistryIsNotFVAccountOwner() public {
-    assertFalse(FVAccountWrapper(fvAccountRegistry.fvAccountAddr()).owner() == address(fvAccountRegistry));
+    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
+    assertFalse(fvAccount.owner() == address(fvAccountRegistry));
   }
 
   function testFVAccountRegistryHasNoPermissions() public virtual {
-    bytes memory registryPermissions = FVAccountWrapper(fvAccountRegistry.fvAccountAddr()).getData(Utils.permissionsKey(address(fvAccountRegistry)));
+    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
+    bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(address(fvAccountRegistry)));
     assertEq(registryPermissions, Utils.toBytes(NO_PERMISSION));
   }
 
   function testFVAccountOwnerIsKeyManager() public virtual {
-    assertEq(FVAccountWrapper(fvAccountRegistry.fvAccountAddr()).owner(), fvAccountRegistry.fvKeyManagerAddr());
+    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
+    assertEq(fvAccount.owner(), fvAccountRegistry.fvKeyManagerAddr());
   }
 
   function testRegisterOfZeroAddress() public {
