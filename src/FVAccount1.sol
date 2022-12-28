@@ -12,7 +12,6 @@ import "./IFVAccountRegistry.sol";
 import "./Utils.sol";
 
 contract FVAccountRegistry is IFVAccountRegistry {
-  using Utils for address;
   using Utils for string;
 
   LSP0ERC725Account immutable public fvAccount;
@@ -26,7 +25,7 @@ contract FVAccountRegistry is IFVAccountRegistry {
     
     // add permission to set the owner of the account
     fvAccount.setData(
-      address(this).permissionsKey(),
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
       ALL_PERMISSIONS.toBytes()
     );
 
@@ -37,7 +36,7 @@ contract FVAccountRegistry is IFVAccountRegistry {
     fvKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        address(this).permissionsKey(),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
         NO_PERMISSION.toBytes()
       )
     );
@@ -66,10 +65,16 @@ contract FVAccountRegistry is IFVAccountRegistry {
     LSP6KeyManager kmgr = new LSP6KeyManager(address(acc));
 
     // temporarily give SUPER permissions to self
-    acc.setData(address(this).permissionsKey(), ALL_PERMISSIONS.toBytes());
+    acc.setData(
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
+      ALL_PERMISSIONS.toBytes()
+    );
 
     // give SUPER permissions to user
-    acc.setData(_addr.permissionsKey(), ALL_PERMISSIONS.toBytes());
+    acc.setData(
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr),
+      ALL_PERMISSIONS.toBytes()
+    );
 
     acc.transferOwnership(address(kmgr));
     kmgr.execute(abi.encode(acc.acceptOwnership.selector));
@@ -78,7 +83,7 @@ contract FVAccountRegistry is IFVAccountRegistry {
     kmgr.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        address(this).permissionsKey(),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
         NO_PERMISSION.toBytes()
       )
     );

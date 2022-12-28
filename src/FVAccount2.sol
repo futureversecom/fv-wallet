@@ -58,10 +58,16 @@ contract FVAccountRegistry is IFVAccountRegistry {
 
     // temporarily give SUPER permissions to this contract,
     // required to set the owner of the account
-    userFVAccount.setData(address(this).permissionsKey(), ALL_PERMISSIONS.toBytes());
+    userFVAccount.setData(
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
+      ALL_PERMISSIONS.toBytes()
+    );
 
     // give SUPER permissions to user
-    userFVAccount.setData(_addr.permissionsKey(), ALL_PERMISSIONS.toBytes());
+    userFVAccount.setData(
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr),
+      ALL_PERMISSIONS.toBytes()
+    );
 
     // 2 step ownable transfer to LSP6KeyManager proxy
     userFVAccount.transferOwnership(userFVKeyManagerAddr);
@@ -71,7 +77,7 @@ contract FVAccountRegistry is IFVAccountRegistry {
     userFVKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        address(this).permissionsKey(),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
         NO_PERMISSION.toBytes()
       )
     );

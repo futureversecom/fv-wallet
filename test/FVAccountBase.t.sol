@@ -124,7 +124,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     startMeasuringGas("userKeyManager.execute() add call permission");
@@ -133,7 +133,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
     // Give allowed calls permissions to wrong contract
     execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
         Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(gameAddr)), "ffffffff"))
     );
     startMeasuringGas("userKeyManager.execute() add call contract permission");
@@ -152,14 +152,14 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     userKeyManager.execute(execData);
     // Give allowed calls permissions
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
       Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff"))
     );
     userKeyManager.execute(execData);
@@ -180,14 +180,14 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
       Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     userKeyManager.execute(execData);
     // Give allowed calls permissions
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
       Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff", "1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20B)), "ffffffff"))
     );
     userKeyManager.execute(execData);
