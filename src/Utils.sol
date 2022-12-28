@@ -7,6 +7,12 @@ pragma solidity ^0.8.17;
 */
 error AccountAlreadyExists(address addr);
 
+// All Permissions currently exclude REENTRANCY, DELEGATECALL and SUPER_DELEGATECALL for security
+// source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182
+string constant ALL_PERMISSIONS = "00000000000000000000000000000000000000000000000000000000003f3f7f";
+string constant NO_PERMISSION = "0000000000000000000000000000000000000000000000000000000000000000";
+string constant ADDRESS_PERMISSION_KEY = "4b80742de2bfc6dd6b3c0000";
+
 library Utils {
   bytes16 private constant SYMBOLS = "0123456789abcdef";
   uint8 private constant ADDRESS_LENGTH = 20;
