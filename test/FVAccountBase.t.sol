@@ -27,7 +27,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     mockERC20 = new MockERC20();
   }
 
-  function testFVAccountRegistryIsNotFVAccountOwner() public virtual {
+  function testFVAccountRegistryIsNotFVAccountOwner() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertFalse(fvAccount.owner() == address(fvAccountRegistry));
   }
