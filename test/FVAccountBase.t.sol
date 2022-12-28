@@ -114,7 +114,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
         Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
-        Utils.createCallContractWhitelistData(allowed)
+        createCallContractWhitelistData(allowed)
     );
     startMeasuringGas("userKeyManager.execute() add call contract permission");
     userKeyManager.execute(execData);
@@ -142,7 +142,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
-      Utils.createCallContractWhitelistData(allowed)
+      createCallContractWhitelistData(allowed)
     );
     userKeyManager.execute(execData);
 
@@ -172,7 +172,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
-      Utils.createCallContractWhitelistData(allowed)
+      createCallContractWhitelistData(allowed)
     );
     userKeyManager.execute(execData);
 
