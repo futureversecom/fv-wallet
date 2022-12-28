@@ -7,6 +7,14 @@ pragma solidity ^0.8.17;
 */
 error AccountAlreadyExists(address addr);
 
+// All Permissions currently exclude REENTRANCY, DELEGATECALL and SUPER_DELEGATECALL for security
+// source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182
+string constant ALL_PERMISSIONS = "00000000000000000000000000000000000000000000000000000000003f3f7f";
+string constant NO_PERMISSION = "0000000000000000000000000000000000000000000000000000000000000000";
+string constant KEY_ADDRESSPERMISSIONS_PERMISSIONS = "4b80742de2bf82acb3630000";
+string constant KEY_ADDRESSPERMISSIONS_ALLOWEDADDRESSES = "4b80742de2bfc6dd6b3c0000";
+string constant KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS = "4b80742de2bf393a64c70000";
+
 library Utils {
   bytes16 private constant SYMBOLS = "0123456789abcdef";
   uint8 private constant ADDRESS_LENGTH = 20;
@@ -63,7 +71,8 @@ library Utils {
     return r;
   }
 
-  function permissionsKey(address _addr) public pure returns (bytes32) {
-    return bytes32(toBytes(string.concat("4b80742de2bf82acb3630000", toHexStringNoPrefix(_addr))));
+  function permissionsKey(string memory permissionKey, address _addr) public pure returns (bytes32) {
+    return bytes32(toBytes(string.concat(permissionKey, toHexStringNoPrefix(_addr))));
   }
+
 }

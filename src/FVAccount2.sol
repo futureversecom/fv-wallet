@@ -8,35 +8,21 @@ import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInit.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 
+import "./IFVAccountRegistry.sol";
 import "./Utils.sol";
 
-contract FVAccountRegistry {
+contract FVAccountRegistry is IFVAccountRegistry {
   using Utils for address;
   using Utils for string;
-
-  // All Permissions currently exclude REENTRANCY, DELEGATECALL and SUPER_DELEGATECALL for security
-  // source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182
-  string public constant ALL_PERMISSIONS = "00000000000000000000000000000000000000000000000000000000003f3f7f";
-  string public constant NO_PERMISSION = "0000000000000000000000000000000000000000000000000000000000000000";
 
   LSP0ERC725AccountInit immutable public fvAccount;
   LSP6KeyManagerInit immutable public fvKeyManager;
 
   mapping(address => address) public accounts;
 
-  /**
-  * @notice Emitted when registering a new address
-  * @param account The address of the account registered
-  */
-  event AccountRegistered(address indexed account);
-
   constructor() {
     fvAccount = new LSP0ERC725AccountInit();
     fvKeyManager = new LSP6KeyManagerInit();
-  }
-
-  function identityOf(address _addr) public view returns (address) {
-    return accounts[_addr];
   }
 
   // optimized registration using proxies
@@ -60,10 +46,16 @@ contract FVAccountRegistry {
 
     // temporarily give SUPER permissions to this contract,
     // required to set the owner of the account
-    userFVAccount.setData(address(this).permissionsKey(), ALL_PERMISSIONS.toBytes());
+    userFVAccount.setData(
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
+      ALL_PERMISSIONS.toBytes()
+    );
 
     // give SUPER permissions to user
-    userFVAccount.setData(_addr.permissionsKey(), ALL_PERMISSIONS.toBytes());
+    userFVAccount.setData(
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr),
+      ALL_PERMISSIONS.toBytes()
+    );
 
     // 2 step ownable transfer to LSP6KeyManager proxy
     userFVAccount.transferOwnership(userFVKeyManagerAddr);
@@ -73,7 +65,7 @@ contract FVAccountRegistry {
     userFVKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        address(this).permissionsKey(),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(this)),
         NO_PERMISSION.toBytes()
       )
     );
@@ -83,5 +75,17 @@ contract FVAccountRegistry {
     emit AccountRegistered(_addr);
 
     return userFVKeyManagerAddr;
+  }
+
+  function identityOf(address _addr) public view returns (address) {
+    return accounts[_addr];
+  }
+
+  function fvAccountAddr() external view returns (address) {
+    return address(fvAccount);
+  }
+
+  function fvKeyManagerAddr() external view returns (address) {
+    return address(fvKeyManager);
   }
 }
