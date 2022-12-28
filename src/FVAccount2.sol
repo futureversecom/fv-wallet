@@ -25,18 +25,6 @@ contract FVAccountRegistry is IFVAccountRegistry {
     fvKeyManager = new LSP6KeyManagerInit();
   }
 
-  function fvAccountAddr() external view returns (address) {
-    return address(fvAccount);
-  }
-
-  function fvKeyManagerAddr() external view returns (address) {
-    return address(fvKeyManager);
-  }
-
-  function identityOf(address _addr) public view returns (address) {
-    return accounts[_addr];
-  }
-
   // optimized registration using proxies
   // TODO: Note gas costs for previous tests
   // TODO: benchmark/compare gas costs
@@ -87,5 +75,17 @@ contract FVAccountRegistry is IFVAccountRegistry {
     emit AccountRegistered(_addr);
 
     return userFVKeyManagerAddr;
+  }
+
+  function identityOf(address _addr) public view returns (address) {
+    return accounts[_addr];
+  }
+
+  function fvAccountAddr() external view returns (address) {
+    return address(fvAccount);
+  }
+
+  function fvKeyManagerAddr() external view returns (address) {
+    return address(fvKeyManager);
   }
 }
