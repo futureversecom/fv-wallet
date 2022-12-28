@@ -64,6 +64,10 @@ library Utils {
   }
 
   function permissionsKey(address _addr) public pure returns (bytes32) {
-    return bytes32(toBytes(string.concat("4b80742de2bf82acb3630000", toHexStringNoPrefix(_addr))));
+    return permissionsKey("4b80742de2bf82acb3630000", _addr);
+  }
+
+  function permissionsKey(string memory permissionKey, address _addr) public pure returns (bytes32) {
+    return bytes32(toBytes(string.concat(permissionKey, toHexStringNoPrefix(_addr))));
   }
 }

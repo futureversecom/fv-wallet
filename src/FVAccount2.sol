@@ -18,6 +18,7 @@ contract FVAccountRegistry {
   // source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182
   string public constant ALL_PERMISSIONS = "00000000000000000000000000000000000000000000000000000000003f3f7f";
   string public constant NO_PERMISSION = "0000000000000000000000000000000000000000000000000000000000000000";
+  string public constant ADDRESS_PERMISSION_KEY = "4b80742de2bfc6dd6b3c0000";
 
   LSP0ERC725AccountInit immutable public fvAccount;
   LSP6KeyManagerInit immutable public fvKeyManager;

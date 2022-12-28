@@ -2,7 +2,9 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 
 import {FVAccountRegistry, AccountAlreadyExists, Utils} from "../src/FVAccount2.sol";
@@ -81,8 +83,116 @@ contract FVAccount2RegistryTest is Test {
       0,
       mintCall
     );
-    LSP6KeyManager(userKeyManagerAddr).execute(executeCall);
+    ILSP6KeyManager(userKeyManagerAddr).execute(executeCall);
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
+  }
+
+  //
+  // Test CALL permissions
+  //
+
+  // Construct call data for calling mint on the mockERC20
+  function createTestERC20ExecuteData(MockERC20 _mockERC20) internal view returns (bytes memory) {
+    // abi encoded call to mint 100 tokens to address(this)
+    bytes memory mintCall = abi.encodeWithSelector(_mockERC20.mint.selector, address(this), 100);
+    // abi encoded call to execute mint call
+    bytes memory executeCall = abi.encodeWithSignature(
+      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+      0,
+      address(_mockERC20),
+      0,
+      mintCall
+    );
+
+    return executeCall;
+  }
+
+  function testUnauthedExternalAccountFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+    address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+
+    vm.prank(gameAddr);
+    vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, gameAddr));
+    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+  }
+
+  function testAuthedExternalAccountWrongContractFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+    address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+
+    // Give call permission
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
+        Utils.toBytes(_PERMISSION_CALL) // Call only
+    ));
+    // Give allowed calls permissions to wrong contract
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+        Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(gameAddr)), "ffffffff"))
+      ));
+
+    vm.prank(gameAddr);
+    vm.expectRevert(abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mint.selector));
+    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+  }
+
+  function testAuthedExternalAccountSingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+    address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+
+    // Give call permission
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
+        Utils.toBytes(_PERMISSION_CALL) // Call only
+    ));
+    // Give allowed calls permissions
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+        Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff"))
+      ));
+
+
+    vm.prank(gameAddr);
+    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+
+    assertEq(mockERC20.balanceOf(address(this)), 100);
+  }
+
+  function testAuthedExternalAccountMultipleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+    address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+    MockERC20 mockERC20B = new MockERC20();
+
+    // Give call permission
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey("4b80742de2bf82acb3630000", gameAddr), // AddressPermissions:Permissions
+        Utils.toBytes(_PERMISSION_CALL) // Call only
+    ));
+    // Give allowed calls permissions
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey("4b80742de2bf393a64c70000", gameAddr), // AddressPermissions:AllowedCalls
+        Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff", "1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20B)), "ffffffff"))
+      ));
+
+
+    vm.prank(gameAddr);
+    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createTestERC20ExecuteData(mockERC20B));
+
+    assertEq(mockERC20.balanceOf(address(this)), 100);
+    assertEq(mockERC20B.balanceOf(address(this)), 100);
   }
 }
