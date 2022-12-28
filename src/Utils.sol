@@ -74,4 +74,26 @@ library Utils {
   function permissionsKey(string memory permissionKey, address _addr) public pure returns (bytes32) {
     return bytes32(toBytes(string.concat(permissionKey, toHexStringNoPrefix(_addr))));
   }
+
+  /**
+   * Create permission data for whitelisting all calls to given address.
+   * @param addrs The addresses to whitelist.
+   * @return permissionData The data to set to allow access to all addresses.
+   * @notice This method whitelists all interfaces and methods.
+   * @dev Include user's existing permissions when constructing this list so they are not overridden.
+   */
+  function createCallContractWhitelistData(address[] memory addrs) public pure returns (bytes memory) {
+    string memory s = "";
+    // Create compact bytes array for permission data
+    for (uint256 i = 0; i < addrs.length; i++) {
+      // https://github.com/lukso-network/lsp-smart-contracts/blob/6540c98f174c2d6b8340502725bcd338da7c0cca/contracts/LSP6KeyManager/LSP6KeyManagerCore.sol#L872
+      s = string.concat(s,
+        "1cffffffff", // 1c (length) + allow all interfaces
+        Utils.toHexStringNoPrefix(addrs[i]), // addr allowed to access
+        "ffffffff" // allow all methods
+      );
+    }
+    return toBytes(s);
+  }
+
 }

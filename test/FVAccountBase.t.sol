@@ -131,10 +131,12 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
     userKeyManager.execute(execData);
     stopMeasuringGas();
     // Give allowed calls permissions to wrong contract
+    address[] memory allowed = new address[](1);
+    allowed[0] = gameAddr;
     execData = abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
         Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
-        Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(gameAddr)), "ffffffff"))
+        Utils.createCallContractWhitelistData(allowed)
     );
     startMeasuringGas("userKeyManager.execute() add call contract permission");
     userKeyManager.execute(execData);
@@ -156,11 +158,13 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
         Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     userKeyManager.execute(execData);
-    // Give allowed calls permissions
+    // Give allowed calls permissions to erc20
+    address[] memory allowed = new address[](1);
+    allowed[0] = address(mockERC20);
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
-      Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff"))
+      Utils.createCallContractWhitelistData(allowed)
     );
     userKeyManager.execute(execData);
 
@@ -185,10 +189,12 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper {
     );
     userKeyManager.execute(execData);
     // Give allowed calls permissions
+    address[] memory allowed = new address[](1);
+    allowed[0] = address(mockERC20);
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
-      Utils.toBytes(string.concat("1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20)), "ffffffff", "1cffffffff", Utils.toHexStringNoPrefix(address(mockERC20B)), "ffffffff"))
+      Utils.createCallContractWhitelistData(allowed)
     );
     userKeyManager.execute(execData);
 
