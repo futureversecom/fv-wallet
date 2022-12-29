@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
+import {EIP191Signer} from "@lukso/lsp-smart-contracts/contracts/Custom/EIP191Signer.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {VmSafe} from "forge-std/Vm.sol";
+
 import "../../src/Utils.sol";
 
 import "./MockERC20.t.sol";
 
 contract DataHelper {
+    using ECDSA for bytes32;
+
     // Construct call data for calling mint on the mockERC20
     function createTestERC20ExecuteData(MockERC20 _mockERC20)
         internal
@@ -54,5 +61,34 @@ contract DataHelper {
             );
         }
         return Utils.toBytes(s);
+    }
+
+    function _signForRelayCall(
+        bytes memory payload,
+        uint256 nonce,
+        uint256 pk,
+        VmSafe vm,
+        address validator
+    ) internal view returns (bytes memory) {
+        bytes memory encodedMessage = abi.encodePacked(
+            LSP6_VERSION,
+            block.chainid,
+            nonce,
+            uint256(0), // 0 ETH sent
+            payload
+        );
+        return _sign(EIP191Signer.toDataWithIntendedValidator(validator, encodedMessage), pk, vm);
+    }
+
+    function _sign(
+        bytes32 data,
+        uint256 pk,
+        VmSafe vm
+    ) internal pure returns (bytes memory) {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        (v, r, s) = vm.sign(pk, data);
+        return abi.encodePacked(r, s, v);
     }
 }

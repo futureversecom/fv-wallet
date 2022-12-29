@@ -21,8 +21,16 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   IFVAccountRegistry public fvAccountRegistry;
   MockERC20 public mockERC20;
 
+  // Random key. DO NOT USE IN A PRODUCTION ENVIRONMENT
+  uint256 private pk = 0xabfa816b2d044fca73f609721c7811b3876e69f915a5398bdb88b3ce5bf28a61;
+  address private pkAddr;
+
   // re-declare event for assertions
   event AccountRegistered(address indexed account, address indexed wallet);
+
+  constructor() {
+    pkAddr = vm.addr(pk);
+  }
 
   function setUp() public virtual {
     mockERC20 = new MockERC20();
@@ -215,4 +223,18 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     fvKeyManager.initialize(address(this));
   }
+
+  function testCallRelay() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(pkAddr));
+
+    bytes memory payload = createTestERC20ExecuteData(mockERC20);
+    bytes memory signature = _signForRelayCall(payload, 0, pk, vm, address(userKeyManager));
+
+    startMeasuringGas("userKeyManager.execute() call erc20 mint");
+    userKeyManager.executeRelayCall(signature, 0, payload);
+    stopMeasuringGas();
+
+    assertEq(mockERC20.balanceOf(address(this)), 100);
+  }
+
 }
