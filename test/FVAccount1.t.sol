@@ -24,4 +24,10 @@ contract FVAccountRegistry1Test is FVAccountRegistryBaseTest {
     assertEq(fvAccount.owner(), fvAccountRegistry.fvKeyManagerAddr());
   }
 
+  // not relevant for FVAccount1
+  function testFVAccountImplCannotBeInitializedTwice() public override {}
+
+  // not relevant for FVAccount1
+  function testFVKeyManagerImplCannotBeInitializedTwice() public override {}
+
 }
