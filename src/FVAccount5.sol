@@ -37,8 +37,6 @@ contract FVAccountRegistry is IFVAccountRegistry {
     // Deploy beacons for the contracts (which user wallet proxies will point to)
     fvAccountBeacon = new UpgradeableBeacon(address(fvAccount));
     fvKeyManagerBeacon = new UpgradeableBeacon(address(fvKeyManager));
-
-    fvAccount.disableInitializers();
   }
 
   // TODO: Note gas costs for previous tests

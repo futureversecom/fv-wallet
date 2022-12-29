@@ -14,6 +14,7 @@ contract LSP0ERC725AccountLateInit is LSP0ERC725AccountInitAbstract {
 
     constructor() {
         _initializer = msg.sender;
+        _disableInitializers();
     }
 
     /**
@@ -28,7 +29,4 @@ contract LSP0ERC725AccountLateInit is LSP0ERC725AccountInitAbstract {
         _setData(dataKey, dataValue);
     }
 
-    function disableInitializers() external {
-        _disableInitializers();
-    }
 }
