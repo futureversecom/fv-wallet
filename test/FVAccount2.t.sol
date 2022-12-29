@@ -11,14 +11,4 @@ contract FVAccountRegistry2Test is FVAccountRegistryBaseTest {
     super.setUp();
   }
 
-  function testFVAccountOwnerIsZeroAddress() public {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    assertEq(fvAccount.owner(), address(0));
-  }
-
-  function testFVAccountRegistryHasNoPermissions() public {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry)));
-    assertEq(registryPermissions, bytes(""));
-  }
 }

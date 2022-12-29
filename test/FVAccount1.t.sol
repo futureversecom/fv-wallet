@@ -11,7 +11,7 @@ contract FVAccountRegistry1Test is FVAccountRegistryBaseTest {
     super.setUp();
   }
 
-  function testFVAccountRegistryHasNoPermissions() public {
+  function testFVAccountRegistryHasNoPermissions() public override {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     bytes memory registryPermissions = fvAccount.getData(
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry))
@@ -23,6 +23,9 @@ contract FVAccountRegistry1Test is FVAccountRegistryBaseTest {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertEq(fvAccount.owner(), fvAccountRegistry.fvKeyManagerAddr());
   }
+
+  // not relevant for FVAccount1 - since KeyManager is always account owner
+  function testFVAccountOwnerIsZeroAddress() public override {}
 
   // not relevant for FVAccount1
   function testFVAccountImplCannotBeInitializedTwice() public override {}
