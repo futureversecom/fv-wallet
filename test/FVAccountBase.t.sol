@@ -21,31 +21,31 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   MockERC20 public mockERC20;
 
   // re-declare event for assertions
-  event AccountRegistered(address indexed account);
+  event AccountRegistered(address indexed account, address indexed wallet);
 
   function setUp() public virtual {
     mockERC20 = new MockERC20();
   }
 
-  function testFVAccountRegistryIsNotFVAccountOwner() public virtual {
+  function testFVAccountRegistryIsNotFVAccountOwner() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertFalse(fvAccount.owner() == address(fvAccountRegistry));
   }
 
   function testRegisterOfZeroAddress() public {
-    vm.expectEmit(true, false, false, false, address(fvAccountRegistry));
+    vm.expectEmit(true, false, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
     // We emit the event we expect to see.
-    emit AccountRegistered(address(0));
+    emit AccountRegistered(address(0), address(0));
 
     // Perform the actual call (which should emit expected event).
     fvAccountRegistry.register(address(0));
   }
 
   function testRegisterOfNewAddressSucceeds() public {
-    vm.expectEmit(true, false, false, false, address(fvAccountRegistry));
+    vm.expectEmit(true, false, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    emit AccountRegistered(address(this));
+    emit AccountRegistered(address(this), address(0));
 
     startMeasuringGas("fvAccountRegistry.register(address(this)) success");
     address userKeyManagerAddr = fvAccountRegistry.register(address(this));
