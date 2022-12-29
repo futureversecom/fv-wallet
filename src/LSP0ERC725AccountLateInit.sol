@@ -23,7 +23,7 @@ contract LSP0ERC725AccountLateInit is LSP0ERC725AccountInitAbstract {
      * @param dataKey data key to set
      * @param dataKey data value to set
      */
-    function initializeWithData(address newOwner, bytes32 dataKey, bytes memory dataValue) external payable initializer {
+    function initialize(address newOwner, bytes32 dataKey, bytes memory dataValue) external payable initializer {
         if (msg.sender != _initializer) revert CallerNotInitializer(_initializer, msg.sender);
         LSP0ERC725AccountInitAbstract._initialize(newOwner);
         _setData(dataKey, dataValue);

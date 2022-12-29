@@ -55,7 +55,7 @@ contract FVAccountRegistry is IFVAccountRegistry {
     address userFVKeyManagerAddr = address(userFVKeyManagerProxy); // gas savings (repeated access)
 
     // Initialise key manager as owner and SUPER permissions to user
-    LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initializeWithData(
+    LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
       userFVKeyManagerAddr,
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr),
       ALL_PERMISSIONS.toBytes()

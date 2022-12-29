@@ -18,6 +18,6 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
 
     vm.expectRevert("Initializable: contract is already initialized");
 
-    fvAccount.initializeWithData(address(this), bytes32(""), bytes(""));
+    fvAccount.initialize(address(this), bytes32(""), bytes(""));
   }
 }
