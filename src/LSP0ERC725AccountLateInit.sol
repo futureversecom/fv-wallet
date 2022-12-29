@@ -10,7 +10,7 @@ error CallerNotInitializer(address initializer, address caller);
  * @dev Call initialize with the new owner as soon as it is available.
  */
 contract LSP0ERC725AccountLateInit is LSP0ERC725AccountInitAbstract {
-    address private immutable _initializer;
+    address internal immutable _initializer;
 
     constructor() {
         _initializer = msg.sender;
