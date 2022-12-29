@@ -46,26 +46,24 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     if (accounts[_addr] != address(0)) revert AccountAlreadyExists(_addr);
 
     BeaconProxy userFVAccountProxy = new BeaconProxy(
-      address(fvAccountBeacon), bytes("")
+      address(fvAccountBeacon), bytes("") // dont `initialize` (done below)
     );
     BeaconProxy userFVKeyManagerProxy = new BeaconProxy(
       address(fvKeyManagerBeacon),
       abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)) // set target to proxy -> ERC725Account
     );
 
-    address userFVKeyManagerAddr = address(userFVKeyManagerProxy); // gas savings (repeated access)
-
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
-      userFVKeyManagerAddr,
+      address(userFVKeyManagerProxy),
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr),
       ALL_PERMISSIONS.toBytes()
     );
 
-    accounts[_addr] = userFVKeyManagerAddr;
+    accounts[_addr] = address(userFVKeyManagerProxy);
 
-    emit AccountRegistered(_addr, userFVKeyManagerAddr);
+    emit AccountRegistered(_addr, address(userFVKeyManagerProxy));
 
-    return userFVKeyManagerAddr;
+    return address(userFVKeyManagerProxy);
   }
 
   function identityOf(address _addr) public view returns (address) {
