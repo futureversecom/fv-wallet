@@ -63,9 +63,10 @@ contract DataHelper {
         return Utils.toBytes(s);
     }
 
-    function _signForRelayCall(
+    function signForRelayCall(
         bytes memory payload,
         uint256 nonce,
+        uint256 msgValue,
         uint256 pk,
         VmSafe vm,
         address validator
@@ -74,13 +75,13 @@ contract DataHelper {
             LSP6_VERSION,
             block.chainid,
             nonce,
-            uint256(0), // 0 ETH sent
+            msgValue,
             payload
         );
-        return _sign(EIP191Signer.toDataWithIntendedValidator(validator, encodedMessage), pk, vm);
+        return sign(EIP191Signer.toDataWithIntendedValidator(validator, encodedMessage), pk, vm);
     }
 
-    function _sign(
+    function sign(
         bytes32 data,
         uint256 pk,
         VmSafe vm

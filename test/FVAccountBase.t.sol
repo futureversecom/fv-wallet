@@ -228,7 +228,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(pkAddr));
 
     bytes memory payload = createTestERC20ExecuteData(mockERC20);
-    bytes memory signature = _signForRelayCall(payload, 0, pk, vm, address(userKeyManager));
+    bytes memory signature = signForRelayCall(payload, 0, 0, pk, vm, address(userKeyManager));
 
     startMeasuringGas("userKeyManager.execute() call erc20 mint");
     userKeyManager.executeRelayCall(signature, 0, payload);
