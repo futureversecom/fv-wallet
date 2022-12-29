@@ -4,10 +4,11 @@ pragma solidity ^0.8.17;
 import "forge-std/Test.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInit.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account.sol";
 import {IERC725Y} from "@erc725/smart-contracts/contracts/interfaces/IERC725Y.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 
 import {IFVAccountRegistry} from "../src/IFVAccountRegistry.sol";
 import "../src/Utils.sol";
@@ -27,9 +28,20 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     mockERC20 = new MockERC20();
   }
 
+  function testFVAccountOwnerIsZeroAddress() public virtual {
+    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
+    assertEq(fvAccount.owner(), address(0));
+  }
+
   function testFVAccountRegistryIsNotFVAccountOwner() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertFalse(fvAccount.owner() == address(fvAccountRegistry));
+  }
+
+  function testFVAccountRegistryHasNoPermissions() public virtual {
+    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
+    bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry)));
+    assertEq(registryPermissions, bytes(""));
   }
 
   function testRegisterOfZeroAddress() public {
@@ -186,5 +198,21 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
     assertEq(mockERC20B.balanceOf(address(this)), 100);
+  }
+
+  function testFVAccountImplCannotBeInitializedTwice() public virtual {
+    LSP0ERC725AccountInit fvAccount = LSP0ERC725AccountInit(payable(fvAccountRegistry.fvAccountAddr()));
+
+    vm.expectRevert("Initializable: contract is already initialized");
+
+    fvAccount.initialize(address(this));
+  }
+
+  function testFVKeyManagerImplCannotBeInitializedTwice() public virtual {
+    LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
+
+    vm.expectRevert("Initializable: contract is already initialized");
+
+    fvKeyManager.initialize(address(this));
   }
 }
