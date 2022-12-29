@@ -37,8 +37,6 @@ contract FVAccountRegistry is IFVAccountRegistry {
     fvKeyManagerBeacon = new UpgradeableBeacon(address(fvKeyManager));
   }
 
-  // TODO: Note gas costs for previous tests
-  // TODO: benchmark/compare gas costs
   function register(address _addr) public returns (address) {
     if (accounts[_addr] != address(0)) revert AccountAlreadyExists(_addr);
 
@@ -51,10 +49,8 @@ contract FVAccountRegistry is IFVAccountRegistry {
       abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)) // set target to proxy -> ERC725Account
     );
 
-    address userFVKeyManagerAddr = address(userFVKeyManagerProxy); // gas savings (repeated access)
-
     LSP0ERC725Account userFVAccount = LSP0ERC725Account(payable(address(userFVAccountProxy)));
-    LSP6KeyManager userFVKeyManager = LSP6KeyManager(userFVKeyManagerAddr);
+    LSP6KeyManager userFVKeyManager = LSP6KeyManager(address(userFVKeyManagerProxy));
 
     // temporarily give SUPER permissions to this contract,
     // required to set the owner of the account
@@ -70,7 +66,7 @@ contract FVAccountRegistry is IFVAccountRegistry {
     );
 
     // 2 step ownable transfer to LSP6KeyManager proxy
-    userFVAccount.transferOwnership(userFVKeyManagerAddr);
+    userFVAccount.transferOwnership(address(userFVKeyManagerProxy));
     userFVKeyManager.execute(abi.encode(userFVAccount.acceptOwnership.selector));
 
     // remove permission required to set the owner of the account from this contract
@@ -82,11 +78,11 @@ contract FVAccountRegistry is IFVAccountRegistry {
       )
     );
 
-    accounts[_addr] = userFVKeyManagerAddr;
+    accounts[_addr] = address(userFVKeyManagerProxy);
 
-    emit AccountRegistered(_addr);
+    emit AccountRegistered(_addr, address(userFVKeyManagerProxy));
 
-    return userFVKeyManagerAddr;
+    return address(userFVKeyManagerProxy);
   }
 
   function identityOf(address _addr) public view returns (address) {

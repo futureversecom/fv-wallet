@@ -78,7 +78,7 @@ contract FVAccountRegistry is IFVAccountRegistry {
 
     accounts[_addr] = address(kmgr);
 
-    emit AccountRegistered(_addr);
+    emit AccountRegistered(_addr, address(kmgr));
 
     return address(kmgr);
   }

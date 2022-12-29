@@ -5,8 +5,9 @@ interface IFVAccountRegistry {
     /**
      * @notice Emitted when registering a new address
      * @param account The address of the account registered
+     * @param wallet The address of the wallet (key manager) registered for the account
      */
-    event AccountRegistered(address indexed account);
+    event AccountRegistered(address indexed account, address indexed wallet);
 
     function register(address _addr) external returns (address);
 
