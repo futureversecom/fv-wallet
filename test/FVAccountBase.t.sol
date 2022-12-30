@@ -36,6 +36,22 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     mockERC20 = new MockERC20();
   }
 
+  function testFVAccountImplCannotBeInitializedTwice() public virtual {
+    LSP0ERC725AccountInit fvAccount = LSP0ERC725AccountInit(payable(fvAccountRegistry.fvAccountAddr()));
+
+    vm.expectRevert("Initializable: contract is already initialized");
+
+    fvAccount.initialize(address(this));
+  }
+
+  function testFVKeyManagerImplCannotBeInitializedTwice() public virtual {
+    LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
+
+    vm.expectRevert("Initializable: contract is already initialized");
+
+    fvKeyManager.initialize(address(this));
+  }
+
   function testFVAccountOwnerIsZeroAddress() public virtual {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertEq(fvAccount.owner(), address(0));
@@ -103,6 +119,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
+  
 
   //
   // Test CALL permissions
@@ -210,21 +227,9 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertEq(mockERC20B.balanceOf(address(this)), 100);
   }
 
-  function testFVAccountImplCannotBeInitializedTwice() public virtual {
-    LSP0ERC725AccountInit fvAccount = LSP0ERC725AccountInit(payable(fvAccountRegistry.fvAccountAddr()));
-
-    vm.expectRevert("Initializable: contract is already initialized");
-
-    fvAccount.initialize(address(this));
-  }
-
-  function testFVKeyManagerImplCannotBeInitializedTwice() public virtual {
-    LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
-
-    vm.expectRevert("Initializable: contract is already initialized");
-
-    fvKeyManager.initialize(address(this));
-  }
+  //
+  // Test CALL permissions using relay
+  //
 
   function testCallRelay() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(pkAddr));
