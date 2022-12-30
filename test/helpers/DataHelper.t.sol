@@ -15,7 +15,7 @@ contract DataHelper {
     using ECDSA for bytes32;
 
     // Construct call data for calling mint on the mockERC20
-    function createTestERC20ExecuteData(MockERC20 _mockERC20)
+    function createERC20ExecuteDataForCall(MockERC20 _mockERC20)
         internal
         view
         returns (bytes memory)

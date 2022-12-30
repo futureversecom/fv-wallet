@@ -131,7 +131,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, gameAddr));
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
   function testCallAuthedExternalAccounWrongContractFails() public {
@@ -161,7 +161,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     vm.expectRevert(abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mint.selector));
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
   function testCallAuthedExternalAccountSingleContract() public {
@@ -187,7 +187,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     startMeasuringGas("userKeyManager.execute() call erc20 mint");
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
     stopMeasuringGas();
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
@@ -217,10 +217,10 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     startMeasuringGas("userKeyManager.execute() call erc20 mint");
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
     stopMeasuringGas();
     startMeasuringGas("userKeyManager.execute() call erc20 mint b");
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20B));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20B));
     stopMeasuringGas();
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
@@ -234,7 +234,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   function testCallRelay() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(pkAddr));
 
-    bytes memory payload = createTestERC20ExecuteData(mockERC20);
+    bytes memory payload = createERC20ExecuteDataForCall(mockERC20);
     bytes memory signature = signForRelayCall(payload, 0, 0, pk, vm, address(userKeyManager));
 
     startMeasuringGas("userKeyManager.execute() call erc20 mint");
