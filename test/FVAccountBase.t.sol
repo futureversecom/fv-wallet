@@ -52,7 +52,8 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertEq(registryPermissions, bytes(""));
   }
 
-  function testRegisterOfZeroAddress() public {
+  function testRegisterOfZeroAddress() public virtual {
+    // ignore 2nd param of event (not deterministic)
     vm.expectEmit(true, false, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
     // We emit the event we expect to see.
@@ -62,7 +63,8 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     fvAccountRegistry.register(address(0));
   }
 
-  function testRegisterOfNewAddressSucceeds() public {
+  function testRegisterOfNewAddressSucceeds() public virtual {
+    // ignore 2nd param of event (not deterministic)
     vm.expectEmit(true, false, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
     emit AccountRegistered(address(this), address(0));
