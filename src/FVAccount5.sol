@@ -45,10 +45,13 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   function register(address _addr) public returns (address) {
     if (accounts[_addr] != address(0)) revert AccountAlreadyExists(_addr);
 
-    BeaconProxy userFVAccountProxy = new BeaconProxy(
+    // deploy ERC725Account proxy - using Create2
+    BeaconProxy userFVAccountProxy = new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
       address(fvAccountBeacon), bytes("") // dont `initialize` (done below)
     );
-    BeaconProxy userFVKeyManagerProxy = new BeaconProxy(
+
+    // deploy KeyManager proxy - using Create2
+    BeaconProxy userFVKeyManagerProxy = new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
       address(fvKeyManagerBeacon),
       abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)) // set target to proxy -> ERC725Account
     );
