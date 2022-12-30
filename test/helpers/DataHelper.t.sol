@@ -9,7 +9,7 @@ import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 
 import "../../src/Utils.sol";
 
-import "./MockERC20.t.sol";
+import "./MockContracts.t.sol";
 
 contract DataHelper {
     using ECDSA for bytes32;
@@ -29,10 +29,29 @@ contract DataHelper {
         // abi encoded call to execute mint call
         bytes memory executeCall = abi.encodeWithSignature(
             "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-            0,
+            0, // CALL
             address(_mockERC20),
             0,
             mintCall
+        );
+
+        return executeCall;
+    }
+
+    // Construct call data for creating a new contract (minimal proxy)
+    function createExecuteDataForCreate(address _implementation) internal pure returns (bytes memory) {
+        bytes memory bytecodeWithConstructor = abi.encodePacked(
+            type(MockMinimalProxy).creationCode,
+            abi.encode(_implementation)
+        );
+
+        // abi encoded call to create a new contract
+        bytes memory executeCall = abi.encodeWithSignature(
+            "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+            1, // CREATE
+            address(0), // ignored for create
+            0,
+            bytecodeWithConstructor
         );
 
         return executeCall;

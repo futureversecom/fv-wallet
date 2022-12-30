@@ -15,7 +15,7 @@ import "../src/Utils.sol";
 
 import "./helpers/GasHelper.t.sol";
 import "./helpers/DataHelper.t.sol";
-import "./helpers/MockERC20.t.sol";
+import "./helpers/MockContracts.t.sol";
 
 abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   IFVAccountRegistry public fvAccountRegistry;
@@ -27,6 +27,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
   // re-declare event for assertions
   event AccountRegistered(address indexed account, address indexed wallet);
+  event ContractCreated(uint256 indexed operationType, address indexed contractAddress, uint256 indexed value, bytes32 salt);
 
   constructor() {
     pkAddr = vm.addr(pk);
@@ -225,6 +226,45 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
     assertEq(mockERC20B.balanceOf(address(this)), 100);
+  }
+
+  //
+  // Test CREATE permissions
+  //
+
+  function testCreateUnauthedExternalAccountFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+
+    address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+    vm.prank(userAddr);
+
+    vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, userAddr));
+    userKeyManager.execute(createExecuteDataForCreate(address(mockERC20)));
+  }
+
+  function testCreateAuthedExternalAccountSingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+
+    address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+
+    // Give user CREATE permission
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
+        Utils.toBytes(_PERMISSION_DEPLOY) // CREATE only
+      )
+    );
+
+    // Give allowed calls permissions to erc20
+    address userFVWalletProxy = userKeyManager.target();
+
+    vm.prank(userAddr);
+
+    vm.expectEmit(true, false, true, true, userFVWalletProxy);
+    emit ContractCreated(1, address(0), 0, bytes32(0));
+
+    userKeyManager.execute(createExecuteDataForCreate(address(mockERC20)));
   }
 
   //

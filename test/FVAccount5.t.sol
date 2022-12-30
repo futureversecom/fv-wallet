@@ -94,7 +94,7 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
 
     // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/bc50d373e37a6250f931a5dba3847bc88e46797e/contracts/proxy/ERC1967/ERC1967Upgrade.sol#L28
     bytes32 implementationSlot = bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1);
-    bytes32 implAddr = vm.load(proxyAddress, implementationSlot); // load impl address form storage
+    bytes32 implAddr = vm.load(proxyAddress, implementationSlot); // load impl address from storage
 
     FVAccountRegistry fvAccountRegistry = FVAccountRegistry(address(uint160(uint256(implAddr))));
 
