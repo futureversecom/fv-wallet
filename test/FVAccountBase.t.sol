@@ -125,7 +125,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   // Test CALL permissions
   //
 
-  function testUnauthedExternalAccountFails() public {
+  function testCallUnauthedExternalAccountFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -134,7 +134,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
   }
 
-  function testAuthedExternalAccountWrongContractFails() public {
+  function testCallAuthedExternalAccounWrongContractFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -164,7 +164,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
   }
 
-  function testAuthedExternalAccountSingleContract() public {
+  function testCallAuthedExternalAccountSingleContract() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -193,7 +193,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
 
-  function testAuthedExternalAccountMultipleContract() public {
+  function testCallAuthedExternalAccountMultipleContract() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     MockERC20 mockERC20B = new MockERC20();
