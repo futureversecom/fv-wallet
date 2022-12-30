@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
-import {EIP191Signer} from "@lukso/lsp-smart-contracts/contracts/Custom/EIP191Signer.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {VmSafe} from "forge-std/Vm.sol";
+import {EIP191Signer} from "@lukso/lsp-smart-contracts/contracts/Custom/EIP191Signer.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 
 import "../../src/Utils.sol";
 
@@ -91,5 +92,46 @@ contract DataHelper {
         uint8 v;
         (v, r, s) = vm.sign(pk, data);
         return abi.encodePacked(r, s, v);
+    }
+
+    function predictProxyWalletAddress(
+        address deployer,
+        address fvAccountBeacon,
+        address userAddr
+    ) public pure returns (address) {
+        bytes memory bytecodeWithConstructor = abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
+
+        bytes32 salt = keccak256(abi.encodePacked(userAddr));
+
+        bytes32 hash = keccak256(
+            abi.encodePacked(bytes1(0xff), deployer, salt, keccak256(bytecodeWithConstructor))
+        );
+
+        // NOTE: cast last 20 bytes of hash to address
+        return address(uint160(uint(hash)));
+    }
+
+    function predictProxyWalletKeyManagerAddress(
+        address deployer,
+        address fvKeyManagerBeacon,
+        address proxyWalletAddress,
+        address userAddr
+    ) public pure returns (address) {
+        bytes memory bytecodeWithConstructor = abi.encodePacked(
+            type(BeaconProxy).creationCode,
+            abi.encode(
+                fvKeyManagerBeacon,
+                abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress))
+            )
+        );
+
+        bytes32 salt = keccak256(abi.encodePacked(userAddr));
+
+        bytes32 hash = keccak256(
+            abi.encodePacked(bytes1(0xff), deployer, salt, keccak256(bytecodeWithConstructor))
+        );
+
+        // NOTE: cast last 20 bytes of hash to address
+        return address(uint160(uint(hash)));
     }
 }

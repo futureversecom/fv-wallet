@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import "./FVAccountBase.t.sol";
+import "./helpers/DataHelper.t.sol";
 import "../src/LSP0ERC725AccountLateInit.sol";
 import {FVAccountRegistry} from "../src/FVAccount5.sol";
 
@@ -26,6 +27,57 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
     fvAccountRegistry = FVAccountRegistry(address(proxy)); // set proxy as fvAccountRegistry
 
     super.setUp();
+  }
+
+  function testRegisterOfZeroAddress() public override {
+    vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
+
+    address proxyFVWallet = DataHelper.predictProxyWalletAddress(
+      address(fvAccountRegistry),
+      address(FVAccountRegistry(address(fvAccountRegistry)).fvAccountBeacon()),
+      address(0)
+    );
+
+    // TODO: maybe there is an easier way to get this - via proxy owner?
+    address proxyKeyManager = DataHelper.predictProxyWalletKeyManagerAddress(
+      address(fvAccountRegistry),
+      address(FVAccountRegistry(address(fvAccountRegistry)).fvKeyManagerBeacon()),
+      proxyFVWallet,
+      address(0)
+    );
+
+    // We emit the event we expect to see.
+    emit AccountRegistered(address(0), proxyKeyManager);
+
+    // Perform the actual call (which should emit expected event).
+    fvAccountRegistry.register(address(0));
+  }
+
+  function testRegisterOfNewAddressSucceeds() public override {
+    vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
+
+    address proxyFVWallet = DataHelper.predictProxyWalletAddress(
+      address(fvAccountRegistry),
+      address(FVAccountRegistry(address(fvAccountRegistry)).fvAccountBeacon()),
+      address(this)
+    );
+
+    // TODO: maybe there is an easier way to get this - via proxy owner?
+    address proxyKeyManager = DataHelper.predictProxyWalletKeyManagerAddress(
+      address(fvAccountRegistry),
+      address(FVAccountRegistry(address(fvAccountRegistry)).fvKeyManagerBeacon()),
+      proxyFVWallet,
+      address(this)
+    );
+
+    emit AccountRegistered(address(this), proxyKeyManager);
+
+    startMeasuringGas("fvAccountRegistry.register(address(this)) success");
+    address userKeyManagerAddr = fvAccountRegistry.register(address(this));
+    stopMeasuringGas();
+    assertTrue(userKeyManagerAddr != address(0));
+
+    assertEq(fvAccountRegistry.identityOf(address(this)), userKeyManagerAddr); 
   }
 
   // overridden as `initialize` does not exist on this implementation
