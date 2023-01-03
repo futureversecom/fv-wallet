@@ -32,19 +32,7 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
   function testRegisterOfZeroAddress() public override {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyFVWallet = DataHelper.predictProxyWalletAddress(
-      address(fvAccountRegistry),
-      address(FVAccountRegistry(address(fvAccountRegistry)).fvAccountBeacon()),
-      address(0)
-    );
-
-    // TODO: maybe there is an easier way to get this - via proxy owner?
-    address proxyKeyManager = DataHelper.predictProxyWalletKeyManagerAddress(
-      address(fvAccountRegistry),
-      address(FVAccountRegistry(address(fvAccountRegistry)).fvKeyManagerBeacon()),
-      proxyFVWallet,
-      address(0)
-    );
+    address proxyKeyManager = FVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(0));
 
     // We emit the event we expect to see.
     emit AccountRegistered(address(0), proxyKeyManager);
@@ -56,19 +44,7 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
   function testRegisterOfNewAddressSucceeds() public override {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyFVWallet = DataHelper.predictProxyWalletAddress(
-      address(fvAccountRegistry),
-      address(FVAccountRegistry(address(fvAccountRegistry)).fvAccountBeacon()),
-      address(this)
-    );
-
-    // TODO: maybe there is an easier way to get this - via proxy owner?
-    address proxyKeyManager = DataHelper.predictProxyWalletKeyManagerAddress(
-      address(fvAccountRegistry),
-      address(FVAccountRegistry(address(fvAccountRegistry)).fvKeyManagerBeacon()),
-      proxyFVWallet,
-      address(this)
-    );
+    address proxyKeyManager = FVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(this));
 
     emit AccountRegistered(address(this), proxyKeyManager);
 

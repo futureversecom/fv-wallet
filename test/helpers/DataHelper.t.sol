@@ -112,45 +112,4 @@ contract DataHelper {
         (v, r, s) = vm.sign(pk, data);
         return abi.encodePacked(r, s, v);
     }
-
-    function predictProxyWalletAddress(
-        address deployer,
-        address fvAccountBeacon,
-        address userAddr
-    ) public pure returns (address) {
-        bytes memory bytecodeWithConstructor = abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
-
-        bytes32 salt = keccak256(abi.encodePacked(userAddr));
-
-        bytes32 hash = keccak256(
-            abi.encodePacked(bytes1(0xff), deployer, salt, keccak256(bytecodeWithConstructor))
-        );
-
-        // NOTE: cast last 20 bytes of hash to address
-        return address(uint160(uint(hash)));
-    }
-
-    function predictProxyWalletKeyManagerAddress(
-        address deployer,
-        address fvKeyManagerBeacon,
-        address proxyWalletAddress,
-        address userAddr
-    ) public pure returns (address) {
-        bytes memory bytecodeWithConstructor = abi.encodePacked(
-            type(BeaconProxy).creationCode,
-            abi.encode(
-                fvKeyManagerBeacon,
-                abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress))
-            )
-        );
-
-        bytes32 salt = keccak256(abi.encodePacked(userAddr));
-
-        bytes32 hash = keccak256(
-            abi.encodePacked(bytes1(0xff), deployer, salt, keccak256(bytecodeWithConstructor))
-        );
-
-        // NOTE: cast last 20 bytes of hash to address
-        return address(uint160(uint(hash)));
-    }
 }
