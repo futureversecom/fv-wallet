@@ -239,7 +239,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     vm.prank(userAddr);
 
     vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, userAddr));
-    userKeyManager.execute(createExecuteDataForCreate(address(mockERC20)));
+    userKeyManager.execute(createMockERC20ExecuteData());
   }
 
   function testCreateAuthedExternalAccountSingleContract() public {
@@ -252,7 +252,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
         Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
-        Utils.toBytes(_PERMISSION_DEPLOY) // CREATE only
+        Utils.toBytes(_PERMISSION_DEPLOY) // CREATE/CREATE2 only
       )
     );
 
@@ -264,7 +264,61 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     vm.expectEmit(true, false, true, true, userFVWalletProxy);
     emit ContractCreated(1, address(0), 0, bytes32(0));
 
-    userKeyManager.execute(createExecuteDataForCreate(address(mockERC20)));
+    bytes memory data = userKeyManager.execute(createMockERC20ExecuteData());
+
+    address addr = bytesToAddress(data);
+    assertTrue(addr != address(0));
+
+    // test minting on created address
+    MockERC20(addr).mint(address(this), 100);
+    assertEq(MockERC20(addr).balanceOf(address(this)), 100);
+  }
+
+  //
+  // Test CREATE2 permissions
+  //
+
+  function testCreate2UnauthedExternalAccountFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+
+    address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+    vm.prank(userAddr);
+
+    vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, userAddr));
+    userKeyManager.execute(create2MockERC20ExecuteData());
+  }
+
+  function testCreate2AuthedExternalAccountSingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+
+    address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+
+    // Give user CREATE permission
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
+        Utils.toBytes(_PERMISSION_DEPLOY) // CREATE/CREATE2 only
+      )
+    );
+
+    // Give allowed calls permissions to erc20
+    address userFVWalletProxy = userKeyManager.target();
+
+    vm.prank(userAddr);
+
+    vm.expectEmit(true, false, true, true, userFVWalletProxy);
+    emit ContractCreated(2, address(0), 0, bytes32(0));
+
+    bytes memory data = userKeyManager.execute(create2MockERC20ExecuteData());
+
+    address addr = bytesToAddress(data);
+    assertTrue(addr != address(0));
+
+    // test minting on created address
+    MockERC20(addr).mint(address(this), 100);
+    assertEq(MockERC20(addr).balanceOf(address(this)), 100);
+  }
   }
 
   //
