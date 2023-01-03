@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
-import {EIP191Signer} from "@lukso/lsp-smart-contracts/contracts/Custom/EIP191Signer.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {VmSafe} from "forge-std/Vm.sol";
+import {EIP191Signer} from "@lukso/lsp-smart-contracts/contracts/Custom/EIP191Signer.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 
 import "../../src/Utils.sol";
 
-import "./MockERC20.t.sol";
+import "./MockContracts.t.sol";
 
 contract DataHelper {
     using ECDSA for bytes32;
 
     // Construct call data for calling mint on the mockERC20
-    function createTestERC20ExecuteData(MockERC20 _mockERC20)
+    function createERC20ExecuteDataForCall(MockERC20 _mockERC20)
         internal
         view
         returns (bytes memory)
@@ -28,10 +29,29 @@ contract DataHelper {
         // abi encoded call to execute mint call
         bytes memory executeCall = abi.encodeWithSignature(
             "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-            0,
+            0, // CALL
             address(_mockERC20),
             0,
             mintCall
+        );
+
+        return executeCall;
+    }
+
+    // Construct call data for creating a new contract (minimal proxy)
+    function createExecuteDataForCreate(address _implementation) internal pure returns (bytes memory) {
+        bytes memory bytecodeWithConstructor = abi.encodePacked(
+            type(MockMinimalProxy).creationCode,
+            abi.encode(_implementation)
+        );
+
+        // abi encoded call to create a new contract
+        bytes memory executeCall = abi.encodeWithSignature(
+            "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+            1, // CREATE
+            address(0), // ignored for create
+            0,
+            bytecodeWithConstructor
         );
 
         return executeCall;

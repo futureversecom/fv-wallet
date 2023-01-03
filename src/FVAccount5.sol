@@ -45,10 +45,13 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   function register(address _addr) public returns (address) {
     if (accounts[_addr] != address(0)) revert AccountAlreadyExists(_addr);
 
-    BeaconProxy userFVAccountProxy = new BeaconProxy(
+    // deploy ERC725Account proxy - using Create2
+    BeaconProxy userFVAccountProxy = new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
       address(fvAccountBeacon), bytes("") // dont `initialize` (done below)
     );
-    BeaconProxy userFVKeyManagerProxy = new BeaconProxy(
+
+    // deploy KeyManager proxy - using Create2
+    BeaconProxy userFVKeyManagerProxy = new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
       address(fvKeyManagerBeacon),
       abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)) // set target to proxy -> ERC725Account
     );
@@ -77,4 +80,34 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   function fvKeyManagerAddr() external view returns (address) {
     return address(fvKeyManagerBeacon.implementation());
   }
+
+  function predictProxyWalletAddress(address userAddr) public view returns (address) {
+    bytes memory bytecodeWithConstructor = abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
+
+    bytes32 salt = keccak256(abi.encodePacked(userAddr));
+
+    bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecodeWithConstructor)));
+
+    // NOTE: cast last 20 bytes of hash to address
+    return address(uint160(uint(hash)));
+  }
+
+    function predictProxyWalletKeyManagerAddress(address userAddr) public view returns (address) {
+      address proxyWalletAddress = predictProxyWalletAddress(userAddr);
+
+      bytes memory bytecodeWithConstructor = abi.encodePacked(
+        type(BeaconProxy).creationCode,
+        abi.encode(
+          fvKeyManagerBeacon,
+          abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress))
+        )
+      );
+
+      bytes32 salt = keccak256(abi.encodePacked(userAddr));
+
+      bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecodeWithConstructor)));
+
+      // NOTE: cast last 20 bytes of hash to address
+      return address(uint160(uint(hash)));
+    }
 }

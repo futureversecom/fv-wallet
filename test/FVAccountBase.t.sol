@@ -15,7 +15,7 @@ import "../src/Utils.sol";
 
 import "./helpers/GasHelper.t.sol";
 import "./helpers/DataHelper.t.sol";
-import "./helpers/MockERC20.t.sol";
+import "./helpers/MockContracts.t.sol";
 
 abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   IFVAccountRegistry public fvAccountRegistry;
@@ -27,6 +27,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
   // re-declare event for assertions
   event AccountRegistered(address indexed account, address indexed wallet);
+  event ContractCreated(uint256 indexed operationType, address indexed contractAddress, uint256 indexed value, bytes32 salt);
 
   constructor() {
     pkAddr = vm.addr(pk);
@@ -34,6 +35,22 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
   function setUp() public virtual {
     mockERC20 = new MockERC20();
+  }
+
+  function testFVAccountImplCannotBeInitializedTwice() public virtual {
+    LSP0ERC725AccountInit fvAccount = LSP0ERC725AccountInit(payable(fvAccountRegistry.fvAccountAddr()));
+
+    vm.expectRevert("Initializable: contract is already initialized");
+
+    fvAccount.initialize(address(this));
+  }
+
+  function testFVKeyManagerImplCannotBeInitializedTwice() public virtual {
+    LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
+
+    vm.expectRevert("Initializable: contract is already initialized");
+
+    fvKeyManager.initialize(address(this));
   }
 
   function testFVAccountOwnerIsZeroAddress() public virtual {
@@ -52,7 +69,8 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertEq(registryPermissions, bytes(""));
   }
 
-  function testRegisterOfZeroAddress() public {
+  function testRegisterOfZeroAddress() public virtual {
+    // ignore 2nd param of event (not deterministic)
     vm.expectEmit(true, false, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
     // We emit the event we expect to see.
@@ -62,7 +80,8 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     fvAccountRegistry.register(address(0));
   }
 
-  function testRegisterOfNewAddressSucceeds() public {
+  function testRegisterOfNewAddressSucceeds() public virtual {
+    // ignore 2nd param of event (not deterministic)
     vm.expectEmit(true, false, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
     emit AccountRegistered(address(this), address(0));
@@ -101,21 +120,22 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
+  
 
   //
   // Test CALL permissions
   //
 
-  function testUnauthedExternalAccountFails() public {
+  function testCallUnauthedExternalAccountFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
     vm.prank(gameAddr);
     vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, gameAddr));
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
-  function testAuthedExternalAccountWrongContractFails() public {
+  function testCallAuthedExternalAccounWrongContractFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -142,10 +162,10 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     vm.expectRevert(abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mint.selector));
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
-  function testAuthedExternalAccountSingleContract() public {
+  function testCallAuthedExternalAccountSingleContract() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -168,13 +188,13 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     startMeasuringGas("userKeyManager.execute() call erc20 mint");
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
     stopMeasuringGas();
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
 
-  function testAuthedExternalAccountMultipleContract() public {
+  function testCallAuthedExternalAccountMultipleContract() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     MockERC20 mockERC20B = new MockERC20();
@@ -198,36 +218,63 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     startMeasuringGas("userKeyManager.execute() call erc20 mint");
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
     stopMeasuringGas();
     startMeasuringGas("userKeyManager.execute() call erc20 mint b");
-    userKeyManager.execute(createTestERC20ExecuteData(mockERC20B));
+    userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20B));
     stopMeasuringGas();
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
     assertEq(mockERC20B.balanceOf(address(this)), 100);
   }
 
-  function testFVAccountImplCannotBeInitializedTwice() public virtual {
-    LSP0ERC725AccountInit fvAccount = LSP0ERC725AccountInit(payable(fvAccountRegistry.fvAccountAddr()));
+  //
+  // Test CREATE permissions
+  //
 
-    vm.expectRevert("Initializable: contract is already initialized");
+  function testCreateUnauthedExternalAccountFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
 
-    fvAccount.initialize(address(this));
+    address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+    vm.prank(userAddr);
+
+    vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, userAddr));
+    userKeyManager.execute(createExecuteDataForCreate(address(mockERC20)));
   }
 
-  function testFVKeyManagerImplCannotBeInitializedTwice() public virtual {
-    LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
+  function testCreateAuthedExternalAccountSingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
 
-    vm.expectRevert("Initializable: contract is already initialized");
+    address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
-    fvKeyManager.initialize(address(this));
+    // Give user CREATE permission
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
+        Utils.toBytes(_PERMISSION_DEPLOY) // CREATE only
+      )
+    );
+
+    // Give allowed calls permissions to erc20
+    address userFVWalletProxy = userKeyManager.target();
+
+    vm.prank(userAddr);
+
+    vm.expectEmit(true, false, true, true, userFVWalletProxy);
+    emit ContractCreated(1, address(0), 0, bytes32(0));
+
+    userKeyManager.execute(createExecuteDataForCreate(address(mockERC20)));
   }
+
+  //
+  // Test CALL permissions using relay
+  //
 
   function testCallRelay() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(pkAddr));
 
-    bytes memory payload = createTestERC20ExecuteData(mockERC20);
+    bytes memory payload = createERC20ExecuteDataForCall(mockERC20);
     bytes memory signature = signForRelayCall(payload, 0, 0, pk, vm, address(userKeyManager));
 
     startMeasuringGas("userKeyManager.execute() call erc20 mint");
