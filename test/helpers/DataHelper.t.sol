@@ -39,19 +39,31 @@ contract DataHelper {
     }
 
     // Construct call data for creating a new contract (minimal proxy)
-    function createExecuteDataForCreate(address _implementation) internal pure returns (bytes memory) {
-        bytes memory bytecodeWithConstructor = abi.encodePacked(
-            type(MockMinimalProxy).creationCode,
-            abi.encode(_implementation)
+    function createMockERC20ExecuteData() internal pure returns (bytes memory) {
+        // abi encoded call to create a new contract
+        return abi.encodeWithSignature(
+            "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+            1, // CREATE
+            address(0), // ignored for create
+            0,
+            abi.encodePacked(type(MockERC20).creationCode) // bytecode with constructor
+        );
+    }
+
+    // Construct call data for creating a new contract (minimal proxy)
+    function create2MockERC20ExecuteData() internal pure returns (bytes memory) {
+        bytes memory bytecodeWithConstructorAndSalt = abi.encodePacked(
+            type(MockERC20).creationCode,
+            bytes32(0x0) // salt
         );
 
         // abi encoded call to create a new contract
         bytes memory executeCall = abi.encodeWithSignature(
             "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-            1, // CREATE
+            2, // CREATE
             address(0), // ignored for create
             0,
-            bytecodeWithConstructor
+            bytecodeWithConstructorAndSalt
         );
 
         return executeCall;
@@ -111,5 +123,11 @@ contract DataHelper {
         uint8 v;
         (v, r, s) = vm.sign(pk, data);
         return abi.encodePacked(r, s, v);
+    }
+
+    function bytesToAddress(bytes memory bys) public pure returns (address addr) {
+        assembly {
+            addr := mload(add(bys, 0x14))
+        } 
     }
 }
