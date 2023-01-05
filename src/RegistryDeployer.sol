@@ -5,22 +5,24 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import "./FVAccountRegistry.sol";
 
 contract RegistryDeployer {
-  event Deployed(address indexed proxy, address indexed registry, address indexed keyManager);
+  event Deployed(address proxy, address registry, address keyManager);
 
   constructor(address admin) {
     // deploy account registry
-    FVAccountRegistry accountRegistryImpl = new FVAccountRegistry();
+    address accountRegistryImpl = address(new FVAccountRegistry());
 
     // deploy key manager
-    LSP6KeyManagerInit keyManagerImpl = new LSP6KeyManagerInit();
+    address keyManagerImpl = address(new LSP6KeyManagerInit());
 
     // deploy proxy with proxy admin, initialize upgradable account registry
-    TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-      address(accountRegistryImpl),
-      admin,
-      abi.encodeWithSignature("initialize(address)", address(keyManagerImpl))
+    address proxy = address(
+      new TransparentUpgradeableProxy(
+            accountRegistryImpl,
+            admin,
+            abi.encodeWithSignature("initialize(address)", keyManagerImpl)
+          )
     );
 
-    emit Deployed(address(proxy), address(accountRegistryImpl), address(keyManagerImpl));
+    emit Deployed(proxy, accountRegistryImpl, keyManagerImpl);
   }
 }
