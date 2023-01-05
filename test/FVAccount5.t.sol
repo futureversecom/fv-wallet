@@ -12,7 +12,6 @@ import "../src/LSP0ERC725AccountLateInit.sol";
 import {FVAccountRegistry} from "../src/FVAccount5.sol";
 
 contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
-
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
   FVAccountRegistry private registryImpl;
   LSP6KeyManagerInit private keyManagerImpl;
@@ -40,7 +39,8 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
   function testRegisterOfZeroAddress() public override {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyKeyManager = FVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(0));
+    address proxyKeyManager =
+      FVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(0));
 
     // We emit the event we expect to see.
     emit AccountRegistered(address(0), proxyKeyManager);
@@ -52,7 +52,8 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
   function testRegisterOfNewAddressSucceeds() public override {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyKeyManager = FVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(this));
+    address proxyKeyManager =
+      FVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(this));
 
     emit AccountRegistered(address(this), proxyKeyManager);
 
@@ -61,7 +62,7 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     stopMeasuringGas();
     assertTrue(userKeyManagerAddr != address(0));
 
-    assertEq(fvAccountRegistry.identityOf(address(this)), userKeyManagerAddr); 
+    assertEq(fvAccountRegistry.identityOf(address(this)), userKeyManagerAddr);
   }
 
   // overridden as `initialize` does not exist on this implementation
@@ -77,7 +78,7 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     address proxyAddress = address(fvAccountRegistry);
 
     // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/bc50d373e37a6250f931a5dba3847bc88e46797e/contracts/proxy/ERC1967/ERC1967Upgrade.sol#L28
-    bytes32 implementationSlot = bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1);
+    bytes32 implementationSlot = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
     bytes32 implAddr = vm.load(proxyAddress, implementationSlot); // load impl address from storage
 
     FVAccountRegistry fvAccountRegistry = FVAccountRegistry(address(uint160(uint256(implAddr))));
@@ -90,7 +91,6 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
   //
   // FVAccountRegistry Transparent Proxy tests
   //
-
   function testNonAdminCannotCallAdminFunctionsOnFVAccountRegistryTransparentProxy() public {
     // ensure non-admin cannot call TransparentProxy functions
     TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
@@ -167,7 +167,6 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
   //
   // FVKeyManager upgrade tests
   //
-
   function testUpgradingKeyManagerImplFailsAsNonAdmin() public {
     // create a clone of the key manager
     address keyManagerv2 = Clones.clone(fvAccountRegistry.fvKeyManagerAddr());
@@ -199,7 +198,7 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     FVAccountRegistry(address(fvAccountRegistry)).upgradeFVKeyManager(keyManagerv2);
 
     // validate user key manager impl is updated
-    bytes32 beaconSlot = bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1);
+    bytes32 beaconSlot = bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1);
     bytes32 implAddr = vm.load(userKeyManager, beaconSlot); // load beacon address from storage
     assertEq(address(uint160(uint256(implAddr))), address(keyManagerBeacon));
 
@@ -228,7 +227,6 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
   //
   // FVAccount upgrade tests
   //
-
   function testUpgradingFVAccountImplFailsAsNonAdmin() public {
     // create a clone of the account
     address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
@@ -248,10 +246,8 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
 
   function testUpgradingFVAccountImplSucceedsAsAdmin() public {
     // register a user, get the proxy address for user FV account
-    address userFVAccountProxy = address(payable(
-      LSP6KeyManagerInit(fvAccountRegistry.register(address(this)))
-        .target()
-    ));
+    address userFVAccountProxy =
+      address(payable(LSP6KeyManagerInit(fvAccountRegistry.register(address(this))).target()));
 
     // create a clone of the account
     address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
@@ -263,7 +259,7 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     FVAccountRegistry(address(fvAccountRegistry)).upgradeFVAccount(fvAccountv2);
 
     // validate user account impl is updated
-    bytes32 beaconSlot = bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1);
+    bytes32 beaconSlot = bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1);
     bytes32 implAddr = vm.load(userFVAccountProxy, beaconSlot); // load beacon address from storage
     assertEq(address(uint160(uint256(implAddr))), address(fvAccountBeacon));
 
@@ -279,11 +275,7 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     bytes memory oldData = Utils.toBytes(_PERMISSION_CALL);
     bytes32 dataKey = Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr);
-    bytes memory execData = abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        dataKey,
-        oldData
-    );
+    bytes memory execData = abi.encodeWithSelector(bytes4(keccak256("setData(bytes32,bytes)")), dataKey, oldData);
     userKeyManager.execute(execData);
     assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);
 
@@ -298,5 +290,4 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     userKeyManager.execute(execData);
     assertEq(MockAccountUpgraded(payable(address(userKeyManager.target()))).setDataCounter(), 1);
   }
-
 }

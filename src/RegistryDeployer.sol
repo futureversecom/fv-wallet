@@ -5,11 +5,9 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import "./FVAccountRegistry.sol";
 
 contract RegistryDeployer {
-
   event Deployed(address indexed proxy, address indexed registry, address indexed keyManager);
 
   constructor(address admin) {
-
     // deploy account registry
     FVAccountRegistry accountRegistryImpl = new FVAccountRegistry();
 

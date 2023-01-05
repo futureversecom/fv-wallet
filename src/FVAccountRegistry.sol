@@ -38,7 +38,9 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   }
 
   function register(address _addr) public returns (address) {
-    if (accounts[_addr] != address(0)) revert AccountAlreadyExists(_addr);
+    if (accounts[_addr] != address(0)) {
+      revert AccountAlreadyExists(_addr);
+    }
 
     // deploy ERC725Account proxy - using Create2
     BeaconProxy userFVAccountProxy = new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
@@ -46,10 +48,12 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     );
 
     // deploy KeyManager proxy - using Create2
-    address userFVKeyManagerProxy = address(new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
-      address(fvKeyManagerBeacon),
-      abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)) // set target to proxy -> ERC725Account
-    ));
+    address userFVKeyManagerProxy = address(
+      new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
+                        address(fvKeyManagerBeacon),
+                        abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)) // set target to proxy -> ERC725Account
+                      )
+    );
 
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
       address(userFVKeyManagerProxy),
@@ -77,7 +81,8 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   }
 
   function predictProxyWalletAddress(address userAddr) public view returns (address) {
-    bytes memory bytecodeWithConstructor = abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
+    bytes memory bytecodeWithConstructor =
+      abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
     return predictAddress(userAddr, bytecodeWithConstructor);
   }
 
@@ -85,10 +90,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     address proxyWalletAddress = predictProxyWalletAddress(userAddr);
     bytes memory bytecodeWithConstructor = abi.encodePacked(
       type(BeaconProxy).creationCode,
-      abi.encode(
-        fvKeyManagerBeacon,
-        abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress))
-      )
+      abi.encode(fvKeyManagerBeacon, abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress)))
     );
     return predictAddress(userAddr, bytecodeWithConstructor);
   }
@@ -104,6 +106,6 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   function predictAddress(address saltAddr, bytes memory bytecodeWithConstructor) internal view returns (address addr) {
     bytes32 salt = keccak256(abi.encodePacked(saltAddr));
     bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecodeWithConstructor)));
-    return address(uint160(uint(hash)));
+    return address(uint160(uint256(hash)));
   }
 }
