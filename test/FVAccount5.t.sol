@@ -290,7 +290,6 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     // upgrade
     address fvAccountv2 = address(new MockAccountUpgraded());
     FVAccountRegistry(address(fvAccountRegistry)).upgradeFVAccount(fvAccountv2);
-    console.log("Upgraded");
 
     // test old storage
     assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);
