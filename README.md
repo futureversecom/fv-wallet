@@ -89,14 +89,14 @@ Note: Dummy values (private key and public address) for `Alice` have been provid
 2. Run command:
 
 ```sh
-forge script script/FVAccount5.s.sol:Deployment --fork-url http://localhost:8545 --broadcast
+forge script script/RegistryDeployer.s.sol:Deployment --fork-url http://localhost:8545 --broadcast
 ```
 
 #### Prod deployment
 
 ```sh
 source .env
-forge script script/FVAccount5.s.sol:Deployment --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
+forge script script/RegistryDeployer.s.sol:Deployment --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
 ```
 
 ---
