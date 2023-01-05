@@ -19,7 +19,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
 
   UpgradeableBeacon public fvAccountBeacon;
   UpgradeableBeacon public fvKeyManagerBeacon;
-  mapping(address => address) public accounts;
+  mapping(address => address) internal accounts;
 
   constructor() {
     _disableInitializers();
