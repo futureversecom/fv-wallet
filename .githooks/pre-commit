@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# An hook to format sol files.
+
+# Stash changes
+git stash -q --keep-index
+
+# Format staged files
+git diff --name-only --cached | forge fmt
+
+# Commit and unstash
+git add -u
+git stash pop -q
