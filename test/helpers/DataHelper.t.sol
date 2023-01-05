@@ -90,7 +90,11 @@ contract DataHelper {
     uint256 pk,
     VmSafe vm,
     address validator
-  ) internal view returns (bytes memory) {
+  )
+    internal
+    view
+    returns (bytes memory)
+  {
     bytes memory encodedMessage = abi.encodePacked(LSP6_VERSION, block.chainid, nonce, msgValue, payload);
     return sign(EIP191Signer.toDataWithIntendedValidator(validator, encodedMessage), pk, vm);
   }

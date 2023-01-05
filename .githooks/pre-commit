@@ -2,12 +2,14 @@
 #
 # An hook to format sol files.
 
-# Stash changes
-git stash -q --keep-index
+# List staged files
+FILES=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
+[ -z "$FILES" ] && exit 0
 
-# Format staged files
-git diff --name-only --cached | forge fmt
+# Format all selected files
+echo "$FILES" | xargs forge fmt
 
-# Commit and unstash
-git add -u
-git stash pop -q
+# Add back the modified files to staging
+echo "$FILES" | xargs git add
+
+exit 0

@@ -48,12 +48,8 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     );
 
     // deploy KeyManager proxy - using Create2
-    address userFVKeyManagerProxy = address(
-      new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
-                              address(fvKeyManagerBeacon),
-                              abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)) // set target to proxy -> ERC725Account
-                            )
-    );
+    BeaconProxy userFVKeyManagerProxy =
+    new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(address(fvKeyManagerBeacon), abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)));
 
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
       address(userFVKeyManagerProxy),
@@ -61,11 +57,11 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
       ALL_PERMISSIONS.toBytes()
     );
 
-    accounts[_addr] = userFVKeyManagerProxy;
+    accounts[_addr] = address(userFVKeyManagerProxy);
 
-    emit AccountRegistered(_addr, userFVKeyManagerProxy);
+    emit AccountRegistered(_addr, address(userFVKeyManagerProxy));
 
-    return userFVKeyManagerProxy;
+    return address(userFVKeyManagerProxy);
   }
 
   function identityOf(address _addr) public view returns (address) {
