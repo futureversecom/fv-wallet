@@ -29,6 +29,7 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   event AccountRegistered(address indexed account, address indexed wallet);
   event ContractCreated(uint256 indexed operationType, address indexed contractAddress, uint256 indexed value, bytes32 salt);
   event Upgraded(address indexed implementation);
+  event AdminChanged(address previousAdmin, address newAdmin);
 
   constructor() {
     pkAddr = vm.addr(pk);

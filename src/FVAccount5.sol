@@ -6,15 +6,11 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-
-import {LSP0ERC725Account} from "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account.sol";
-import {LSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
-import {LSP0ERC725AccountInit} from "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInit.sol";
 import {LSP6KeyManagerInit} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 
 import {IFVAccountRegistry} from "./IFVAccountRegistry.sol";
+import {LSP0ERC725AccountLateInit} from "./LSP0ERC725AccountLateInit.sol";
 import "./Utils.sol";
-import "./LSP0ERC725AccountLateInit.sol";
 
 // v4 base
 
@@ -29,13 +25,12 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     _disableInitializers();
   }
 
-  function initialize() external virtual initializer {
+  function initialize(LSP6KeyManagerInit fvKeyManager) external virtual initializer {
     // init initializers
     __Ownable_init();
 
     // Deploy initializable ERC725Account (LSP0) and LSP6KeyManager contracts
     LSP0ERC725AccountLateInit fvAccount = new LSP0ERC725AccountLateInit();
-    LSP6KeyManagerInit fvKeyManager = new LSP6KeyManagerInit();
 
     // Deploy beacons for the contracts (which user wallet proxies will point to)
     fvAccountBeacon = new UpgradeableBeacon(address(fvAccount));

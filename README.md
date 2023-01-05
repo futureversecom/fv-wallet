@@ -73,6 +73,32 @@ Run tests:
 forge test
 ```
 
+### Deployment
+
+Copy the `.env.example` file to `.env`  and fill in the required values.
+
+```sh
+cp .env.example .env
+```
+
+Note: Dummy values (private key and public address) for `Alice` have been provided.
+
+#### Deploying to local network
+
+1. Start [local node (e.g. anvil)](https://book.getfoundry.sh/tutorials/solidity-scripting#deploying-locally)
+2. Run command:
+
+```sh
+forge script script/RegistryDeployer.s.sol:Deployment --fork-url http://localhost:8545 --broadcast
+```
+
+#### Prod deployment
+
+```sh
+source .env
+forge script script/RegistryDeployer.s.sol:Deployment --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
+```
+
 ---
 
 ## TODO (tests)
