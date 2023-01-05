@@ -51,7 +51,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     pkAddr = vm.addr(pk);
   }
 
-  function setUp() public virtual {
+  function setUp() public {
     mockERC20 = new MockERC20();
 
     // deploy upgradable contract
@@ -96,7 +96,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Initialising
   //
-  function testFVAccountImplCannotBeInitializedTwice() public virtual {
+  function testFVAccountImplCannotBeInitializedTwice() public {
     LSP0ERC725AccountLateInit fvAccount = LSP0ERC725AccountLateInit(payable(fvAccountRegistry.fvAccountAddr()));
 
     vm.expectRevert("Initializable: contract is already initialized");
@@ -104,7 +104,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     fvAccount.initialize(address(this), bytes32(""), bytes(""));
   }
 
-  function testFVKeyManagerImplCannotBeInitializedTwice() public virtual {
+  function testFVKeyManagerImplCannotBeInitializedTwice() public {
     LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
 
     vm.expectRevert("Initializable: contract is already initialized");
@@ -112,7 +112,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     fvKeyManager.initialize(address(this));
   }
 
-  function testFVAccountOwnerIsZeroAddress() public virtual {
+  function testFVAccountOwnerIsZeroAddress() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertEq(fvAccount.owner(), address(0));
   }
@@ -122,7 +122,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertFalse(fvAccount.owner() == address(fvAccountRegistry));
   }
 
-  function testFVAccountRegistryHasNoPermissions() public virtual {
+  function testFVAccountRegistryHasNoPermissions() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     bytes memory registryPermissions =
       fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry)));
