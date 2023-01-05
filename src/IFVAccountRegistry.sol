@@ -11,6 +11,8 @@ interface IFVAccountRegistry {
 
     function register(address _addr) external returns (address);
 
+    function predictProxyWalletKeyManagerAddress(address _addr) external returns (address);
+
     function identityOf(address _addr) external view returns (address);
 
     function fvAccountAddr() external view returns (address);
