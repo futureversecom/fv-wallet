@@ -43,13 +43,23 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     }
 
     // deploy ERC725Account proxy - using Create2
-    BeaconProxy userFVAccountProxy = new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(
-      address(fvAccountBeacon), bytes("") // dont `initialize` (done below)
-    );
+    BeaconProxy userFVAccountProxy = new BeaconProxy{
+            salt: keccak256(abi.encodePacked(_addr))
+        }(
+            address(fvAccountBeacon),
+            bytes("") // dont `initialize` (done below)
+        );
 
     // deploy KeyManager proxy - using Create2
-    BeaconProxy userFVKeyManagerProxy =
-    new BeaconProxy{ salt: keccak256(abi.encodePacked(_addr)) }(address(fvKeyManagerBeacon), abi.encodeWithSignature("initialize(address)", address(userFVAccountProxy)));
+    BeaconProxy userFVKeyManagerProxy = new BeaconProxy{
+            salt: keccak256(abi.encodePacked(_addr))
+        }(
+            address(fvKeyManagerBeacon),
+            abi.encodeWithSignature(
+                "initialize(address)",
+                address(userFVAccountProxy)
+            )
+        );
 
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
       address(userFVKeyManagerProxy),
@@ -97,6 +107,10 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
 
   function upgradeFVKeyManager(address _newImplementation) external onlyOwner {
     fvKeyManagerBeacon.upgradeTo(_newImplementation);
+  }
+
+  function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+    return interfaceId == type(IFVAccountRegistry).interfaceId || super.supportsInterface(interfaceId);
   }
 
   function predictAddress(address saltAddr, bytes memory bytecodeWithConstructor) internal view returns (address addr) {
