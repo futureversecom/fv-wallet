@@ -4,7 +4,8 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
+import {LSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
+import {LSP6KeyManagerInit} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 
 import "./FVAccountBase.t.sol";
 import "./helpers/DataHelper.t.sol";
@@ -15,16 +16,20 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
 
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
   FVAccountRegistry private registryImpl;
+  LSP6KeyManagerInit private keyManagerImpl;
 
   function setUp() public override {
     // deploy upgradable contract
     registryImpl = new FVAccountRegistry();
 
+    // deploy key manager implementation
+    keyManagerImpl = new LSP6KeyManagerInit();
+
     // deploy proxy with dead address as proxy admin, initialize upgradable account registry
     TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
       address(registryImpl),
       admin,
-      abi.encodeWithSignature("initialize()")
+      abi.encodeWithSignature("initialize(address)", address(keyManagerImpl))
     );
 
     // note: admin can call additional functions on proxy
@@ -80,7 +85,7 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
 
     vm.expectRevert("Initializable: contract is already initialized");
 
-    fvAccountRegistry.initialize();
+    fvAccountRegistry.initialize(keyManagerImpl);
   }
 
   //
@@ -137,13 +142,13 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
     // re-initialize fails as already initialized (state saved in proxy), future contracts must use
     // `reinitializer(version)` modifier on `initialize` function
     vm.expectRevert("Initializable: contract is already initialized");
-    proxy.upgradeToAndCall(fvAccountRegistryV3, abi.encodeWithSignature("initialize()"));
+    proxy.upgradeToAndCall(fvAccountRegistryV3, abi.encodeWithSignature("initialize(address)", address(keyManagerImpl)));
 
     // can successfully re-initialize if upgraded contract has `reinitializer(version)` modifier on `initialize` function
     address initializableMock = address(new UpgradedMock());
     vm.expectEmit(true, false, false, false, address(proxy));
     emit Upgraded(initializableMock);
-    proxy.upgradeToAndCall(initializableMock, abi.encodeWithSignature("initialize()"));
+    proxy.upgradeToAndCall(initializableMock, abi.encodeWithSignature("initialize()")); // new initialize function without key-manager
   }
 
   //

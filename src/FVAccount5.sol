@@ -25,13 +25,12 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     _disableInitializers();
   }
 
-  function initialize() external virtual initializer {
+  function initialize(LSP6KeyManagerInit fvKeyManager) external virtual initializer {
     // init initializers
     __Ownable_init();
 
     // Deploy initializable ERC725Account (LSP0) and LSP6KeyManager contracts
     LSP0ERC725AccountLateInit fvAccount = new LSP0ERC725AccountLateInit();
-    LSP6KeyManagerInit fvKeyManager = new LSP6KeyManagerInit();
 
     // Deploy beacons for the contracts (which user wallet proxies will point to)
     fvAccountBeacon = new UpgradeableBeacon(address(fvAccount));
