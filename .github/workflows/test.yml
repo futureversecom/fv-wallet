@@ -20,14 +20,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Run Forge format
-        run: forge fmt --check
-        id: format
-
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+
+      - name: Run Forge format
+        run: forge fmt --check
+        id: format
 
       - name: Run Forge build
         run: |
