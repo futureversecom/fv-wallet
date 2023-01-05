@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
 
 import "./FVAccountBase.t.sol";
@@ -15,14 +14,15 @@ import {FVAccountRegistry} from "../src/FVAccount5.sol";
 contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
 
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
+  FVAccountRegistry private registryImpl;
 
   function setUp() public override {
     // deploy upgradable contract
-    FVAccountRegistry upgradableFVAccountRegistry = new FVAccountRegistry();
+    registryImpl = new FVAccountRegistry();
 
     // deploy proxy with dead address as proxy admin, initialize upgradable account registry
     TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
-      address(upgradableFVAccountRegistry),
+      address(registryImpl),
       admin,
       abi.encodeWithSignature("initialize()")
     );
@@ -83,6 +83,73 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
     fvAccountRegistry.initialize();
   }
 
+  //
+  // FVAccountRegistry Transparent Proxy tests
+  //
+
+  function testNonAdminCannotCallAdminFunctionsOnFVAccountRegistryTransparentProxy() public {
+    // ensure non-admin cannot call TransparentProxy functions
+    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
+
+    vm.expectRevert();
+    proxy.admin();
+
+    vm.expectRevert();
+    proxy.implementation();
+
+    vm.expectRevert();
+    proxy.changeAdmin(address(this));
+
+    vm.expectRevert();
+    proxy.upgradeTo(address(this));
+
+    vm.expectRevert();
+    proxy.upgradeToAndCall(address(this), "");
+  }
+
+  function testAdminCanCallAdminFunctionsOnFVAccountRegistryTransparentProxy() public {
+    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
+
+    vm.startPrank(admin);
+
+    assertEq(proxy.admin(), admin);
+
+    assertEq(proxy.implementation(), address(registryImpl));
+
+    vm.expectEmit(true, true, false, false, address(proxy));
+    emit AdminChanged(admin, address(this));
+    proxy.changeAdmin(address(this));
+
+    vm.stopPrank(); // admin updated, stop prank
+
+    // upgrade fails if not a contract
+    vm.expectRevert("ERC1967: new implementation is not a contract");
+    proxy.upgradeTo(address(admin));
+
+    // create a copy of the account registry impl (not the proxy) - for testing upgradability
+    address fvAccountRegistryV2 = Clones.clone(address(registryImpl));
+    vm.expectEmit(true, false, false, false, address(proxy));
+    emit Upgraded(fvAccountRegistryV2);
+    proxy.upgradeTo(fvAccountRegistryV2);
+
+    // create a copy of the account registry impl (not the proxy) - for testing upgradability with call
+    address fvAccountRegistryV3 = Clones.clone(address(registryImpl));
+    // re-initialize fails as already initialized (state saved in proxy), future contracts must use
+    // `reinitializer(version)` modifier on `initialize` function
+    vm.expectRevert("Initializable: contract is already initialized");
+    proxy.upgradeToAndCall(fvAccountRegistryV3, abi.encodeWithSignature("initialize()"));
+
+    // can successfully re-initialize if upgraded contract has `reinitializer(version)` modifier on `initialize` function
+    address initializableMock = address(new UpgradedMock());
+    vm.expectEmit(true, false, false, false, address(proxy));
+    emit Upgraded(initializableMock);
+    proxy.upgradeToAndCall(initializableMock, abi.encodeWithSignature("initialize()"));
+  }
+
+  //
+  // FVAccount & FVKeyManager upgrade tests
+  //
+
   function testUpgradingKeyManagerImplFailsAsNonAdmin() public {
     // create a clone of the key manager
     address keyManagerv2 = Clones.clone(fvAccountRegistry.fvKeyManagerAddr());
@@ -140,8 +207,11 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
   }
 
   function testUpgradingFVAccountImplSucceedsAsAdmin() public {
-    // register a user
-    address userFVAccountProxy = address(payable(LSP6KeyManager(fvAccountRegistry.register(address(this))).target()));
+    // register a user, get the proxy address for user FV account
+    address userFVAccountProxy = address(payable(
+      LSP6KeyManager(fvAccountRegistry.register(address(this)))
+        .target()
+    ));
 
     // create a clone of the account
     address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
@@ -161,5 +231,4 @@ contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
     assertEq(fvAccountBeacon.implementation(), fvAccountv2);
   }
 
-  // TODO: test admin upgradable functionality - by pranking as admin
 }
