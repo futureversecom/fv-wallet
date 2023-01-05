@@ -2,9 +2,9 @@
 pragma solidity ^0.8.17;
 
 /**
-* @dev reverts when address `addr` is already registered
-* @param addr the address to register
-*/
+ * @dev reverts when address `addr` is already registered
+ * @param addr the address to register
+ */
 error AccountAlreadyExists(address addr);
 
 // All Permissions currently exclude REENTRANCY, DELEGATECALL and SUPER_DELEGATECALL for security
@@ -36,10 +36,10 @@ library Utils {
   function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
     bytes memory tempEmptyStringTest = bytes(source);
     if (tempEmptyStringTest.length == 0) {
-        return 0x0;
+      return 0x0;
     }
     assembly {
-        result := mload(add(source, 32))
+      result := mload(add(source, 32))
     }
   }
 
@@ -48,14 +48,14 @@ library Utils {
   }
 
   function fromHexChar(uint8 c) internal pure returns (uint8) {
-    if (bytes1(c) >= bytes1('0') && bytes1(c) <= bytes1('9')) {
-      return c - uint8(bytes1('0'));
+    if (bytes1(c) >= bytes1("0") && bytes1(c) <= bytes1("9")) {
+      return c - uint8(bytes1("0"));
     }
-    if (bytes1(c) >= bytes1('a') && bytes1(c) <= bytes1('f')) {
-      return 10 + c - uint8(bytes1('a'));
+    if (bytes1(c) >= bytes1("a") && bytes1(c) <= bytes1("f")) {
+      return 10 + c - uint8(bytes1("a"));
     }
-    if (bytes1(c) >= bytes1('A') && bytes1(c) <= bytes1('F')) {
-      return 10 + c - uint8(bytes1('A'));
+    if (bytes1(c) >= bytes1("A") && bytes1(c) <= bytes1("F")) {
+      return 10 + c - uint8(bytes1("A"));
     }
     revert("fail");
   }
@@ -63,10 +63,10 @@ library Utils {
   // Convert an hexadecimal string to raw bytes
   function toBytes(string memory s) public pure returns (bytes memory) {
     bytes memory ss = bytes(s);
-    require(ss.length%2 == 0); // length must be even
+    require(ss.length % 2 == 0); // length must be even
     bytes memory r = new bytes(ss.length/2);
-    for (uint i=0; i<ss.length/2; ++i) {
-      r[i] = bytes1(fromHexChar(uint8(ss[2*i])) * 16 + fromHexChar(uint8(ss[2*i+1])));
+    for (uint256 i = 0; i < ss.length / 2; ++i) {
+      r[i] = bytes1(fromHexChar(uint8(ss[2 * i])) * 16 + fromHexChar(uint8(ss[2 * i + 1])));
     }
     return r;
   }
@@ -74,5 +74,4 @@ library Utils {
   function permissionsKey(string memory permissionKey, address _addr) public pure returns (bytes32) {
     return bytes32(toBytes(string.concat(permissionKey, toHexStringNoPrefix(_addr))));
   }
-
 }

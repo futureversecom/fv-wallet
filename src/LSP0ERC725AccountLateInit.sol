@@ -10,23 +10,24 @@ error CallerNotInitializer(address initializer, address caller);
  * @dev Call initialize with the new owner as soon as it is available.
  */
 contract LSP0ERC725AccountLateInit is LSP0ERC725AccountInitAbstract {
-    address internal immutable _initializer;
+  address internal immutable _initializer;
 
-    constructor() {
-        _initializer = msg.sender;
-        _disableInitializers();
+  constructor() {
+    _initializer = msg.sender;
+    _disableInitializers();
+  }
+
+  /**
+   * @notice Sets the owner of the contract and set initial data
+   * @param newOwner the owner of the contract
+   * @param dataKey data key to set
+   * @param dataKey data value to set
+   */
+  function initialize(address newOwner, bytes32 dataKey, bytes memory dataValue) external payable initializer {
+    if (msg.sender != _initializer) {
+      revert CallerNotInitializer(_initializer, msg.sender);
     }
-
-    /**
-     * @notice Sets the owner of the contract and set initial data
-     * @param newOwner the owner of the contract
-     * @param dataKey data key to set
-     * @param dataKey data value to set
-     */
-    function initialize(address newOwner, bytes32 dataKey, bytes memory dataValue) external payable initializer {
-        if (msg.sender != _initializer) revert CallerNotInitializer(_initializer, msg.sender);
-        LSP0ERC725AccountInitAbstract._initialize(newOwner);
-        _setData(dataKey, dataValue);
-    }
-
+    LSP0ERC725AccountInitAbstract._initialize(newOwner);
+    _setData(dataKey, dataValue);
+  }
 }

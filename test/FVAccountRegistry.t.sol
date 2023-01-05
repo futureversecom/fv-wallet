@@ -6,7 +6,8 @@ import {IERC725X} from "@erc725/smart-contracts/contracts/interfaces/IERC725X.so
 import {IERC725Y} from "@erc725/smart-contracts/contracts/interfaces/IERC725Y.sol";
 import {LSP0ERC725Account} from "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account.sol";
 import {LSP0ERC725AccountInit} from "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInit.sol";
-import {ILSP1UniversalReceiver} from "@lukso/lsp-smart-contracts/contracts/LSP1UniversalReceiver/ILSP1UniversalReceiver.sol";
+import {ILSP1UniversalReceiver} from
+  "@lukso/lsp-smart-contracts/contracts/LSP1UniversalReceiver/ILSP1UniversalReceiver.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
 import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
@@ -40,7 +41,9 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
   // re-declare event for assertions
   event AccountRegistered(address indexed account, address indexed wallet);
-  event ContractCreated(uint256 indexed operationType, address indexed contractAddress, uint256 indexed value, bytes32 salt);
+  event ContractCreated(
+    uint256 indexed operationType, address indexed contractAddress, uint256 indexed value, bytes32 salt
+  );
   event Upgraded(address indexed implementation);
   event AdminChanged(address previousAdmin, address newAdmin);
 
@@ -48,7 +51,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     pkAddr = vm.addr(pk);
   }
 
-  function setUp() public virtual {
+  function setUp() public {
     mockERC20 = new MockERC20();
 
     // deploy upgradable contract
@@ -71,7 +74,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Interfaces
   //
-
   function testKeyManagerInterfaces() public {
     IERC165 userKeyManager = IERC165(fvAccountRegistry.register(address(0)));
 
@@ -94,8 +96,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Initialising
   //
-
-  function testFVAccountImplCannotBeInitializedTwice() public virtual {
+  function testFVAccountImplCannotBeInitializedTwice() public {
     LSP0ERC725AccountLateInit fvAccount = LSP0ERC725AccountLateInit(payable(fvAccountRegistry.fvAccountAddr()));
 
     vm.expectRevert("Initializable: contract is already initialized");
@@ -103,7 +104,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     fvAccount.initialize(address(this), bytes32(""), bytes(""));
   }
 
-  function testFVKeyManagerImplCannotBeInitializedTwice() public virtual {
+  function testFVKeyManagerImplCannotBeInitializedTwice() public {
     LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
 
     vm.expectRevert("Initializable: contract is already initialized");
@@ -111,7 +112,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     fvKeyManager.initialize(address(this));
   }
 
-  function testFVAccountOwnerIsZeroAddress() public virtual {
+  function testFVAccountOwnerIsZeroAddress() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     assertEq(fvAccount.owner(), address(0));
   }
@@ -121,20 +122,21 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertFalse(fvAccount.owner() == address(fvAccountRegistry));
   }
 
-  function testFVAccountRegistryHasNoPermissions() public virtual {
+  function testFVAccountRegistryHasNoPermissions() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry)));
+    bytes memory registryPermissions =
+      fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry)));
     assertEq(registryPermissions, bytes(""));
   }
 
   //
   // Register
   //
-
   function testRegisterOfZeroAddress() public {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyKeyManager = IFVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(0));
+    address proxyKeyManager =
+      IFVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(0));
 
     // We emit the event we expect to see.
     emit AccountRegistered(address(0), proxyKeyManager);
@@ -146,7 +148,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   function testRegisterOfNewAddressSucceeds() public {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyKeyManager = IFVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(this));
+    address proxyKeyManager =
+      IFVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(this));
 
     emit AccountRegistered(address(this), proxyKeyManager);
 
@@ -188,7 +191,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test CALL permissions
   //
-
   function testCallUnauthedExternalAccountFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
 
@@ -202,9 +204,9 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
-        Utils.toBytes(_PERMISSION_CALL) // Call only
+      bytes4(keccak256("setData(bytes32,bytes)")),
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
+      Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     startMeasuringGas("userKeyManager.execute() add call permission");
     userKeyManager.execute(execData);
@@ -213,16 +215,18 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     address[] memory allowed = new address[](1);
     allowed[0] = gameAddr;
     execData = abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
-        createCallContractWhitelistData(allowed)
+      bytes4(keccak256("setData(bytes32,bytes)")),
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
+      createCallContractWhitelistData(allowed)
     );
     startMeasuringGas("userKeyManager.execute() add call contract permission");
     userKeyManager.execute(execData);
     stopMeasuringGas();
 
     vm.prank(gameAddr);
-    vm.expectRevert(abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mint.selector));
+    vm.expectRevert(
+      abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mint.selector)
+    );
     userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
@@ -231,9 +235,9 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
-        Utils.toBytes(_PERMISSION_CALL) // Call only
+      bytes4(keccak256("setData(bytes32,bytes)")),
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
+      Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     userKeyManager.execute(execData);
     // Give allowed calls permissions to erc20
@@ -290,7 +294,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test CREATE permissions
   //
-
   function testCreateUnauthedExternalAccountFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
 
@@ -336,7 +339,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test CREATE2 permissions
   //
-
   function testCreate2UnauthedExternalAccountFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
 
@@ -382,7 +384,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test STATICCALL permissions
   //
-
   function testStaticCallUnauthedExternalAccountFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
 
@@ -390,13 +391,15 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     vm.prank(userAddr);
 
     vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, userAddr));
-    userKeyManager.execute(abi.encodeWithSignature(
-      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-      3, // STATICCALL
-      address(mockERC20),
-      0,
-      abi.encodeWithSignature("balanceOf(address)", address(this))
-    ));
+    userKeyManager.execute(
+      abi.encodeWithSignature(
+        "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+        3, // STATICCALL
+        address(mockERC20),
+        0,
+        abi.encodeWithSignature("balanceOf(address)", address(this))
+      )
+    );
   }
 
   function testStaticCallAuthedExternalAccountSingleContract() public {
@@ -416,24 +419,28 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     // Give allowed calls permissions to erc20
     address[] memory allowed = new address[](1);
     allowed[0] = address(mockERC20);
-    userKeyManager.execute(abi.encodeWithSelector(
-      bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, userAddr), // AddressPermissions:AllowedCalls
-      createCallContractWhitelistData(allowed)
-    ));
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, userAddr), // AddressPermissions:AllowedCalls
+        createCallContractWhitelistData(allowed)
+      )
+    );
 
     // mint some tokens (for testing)
     mockERC20.mint(address(this), 150);
 
     vm.prank(userAddr);
 
-    bytes memory data = userKeyManager.execute(abi.encodeWithSignature(
-      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-      3, // STATICCALL
-      address(mockERC20),
-      0,
-      abi.encodeWithSignature("balanceOf(address)", address(this))
-    ));
+    bytes memory data = userKeyManager.execute(
+      abi.encodeWithSignature(
+        "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+        3, // STATICCALL
+        address(mockERC20),
+        0,
+        abi.encodeWithSignature("balanceOf(address)", address(this))
+      )
+    );
     uint256 gotAmount = abi.decode(data, (uint256));
     assertEq(gotAmount, 150);
   }
@@ -441,7 +448,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test DELEGATECALL permissions
   //
-
   function testDelegateCallUnauthedExternalAccountFails() public {
     DelegateAttacker delegated = new DelegateAttacker();
 
@@ -451,13 +457,15 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     vm.prank(userAddr);
 
     vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, userAddr));
-    userKeyManager.execute(abi.encodeWithSignature(
-      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-      4, // DELEGATECALL
-      address(delegated),
-      0,
-      abi.encodeWithSignature("balance()")
-    ));
+    userKeyManager.execute(
+      abi.encodeWithSignature(
+        "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+        4, // DELEGATECALL
+        address(delegated),
+        0,
+        abi.encodeWithSignature("balance()")
+      )
+    );
   }
 
   function testDelegateCallFailsOnKeyManager() public {
@@ -478,28 +486,31 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     // Give allowed calls permissions to erc20
     address[] memory allowed = new address[](1);
     allowed[0] = address(delegated);
-    userKeyManager.execute(abi.encodeWithSelector(
-      bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, userAddr), // AddressPermissions:AllowedCalls
-      createCallContractWhitelistData(allowed)
-    ));
+    userKeyManager.execute(
+      abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, userAddr), // AddressPermissions:AllowedCalls
+        createCallContractWhitelistData(allowed)
+      )
+    );
 
     vm.prank(userAddr);
 
     vm.expectRevert(abi.encodeWithSelector(DelegateCallDisallowedViaKeyManager.selector));
-    userKeyManager.execute(abi.encodeWithSignature(
-      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-      4, // DELEGATECALL
-      address(delegated),
-      0,
-      abi.encodeWithSignature("balance()")
-    ));
+    userKeyManager.execute(
+      abi.encodeWithSignature(
+        "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
+        4, // DELEGATECALL
+        address(delegated),
+        0,
+        abi.encodeWithSignature("balance()")
+      )
+    );
   }
 
   //
   // Test CALL permissions using relay
   //
-
   function testCallRelay() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(pkAddr));
 
@@ -517,7 +528,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     address proxyAddress = address(fvAccountRegistry);
 
     // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/bc50d373e37a6250f931a5dba3847bc88e46797e/contracts/proxy/ERC1967/ERC1967Upgrade.sol#L28
-    bytes32 implementationSlot = bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1);
+    bytes32 implementationSlot = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
     bytes32 implAddr = vm.load(proxyAddress, implementationSlot); // load impl address from storage
 
     FVAccountRegistry registry = FVAccountRegistry(address(uint160(uint256(implAddr))));
@@ -530,7 +541,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // FVAccountRegistry Transparent Proxy tests
   //
-
   function testNonAdminCannotCallAdminFunctionsOnFVAccountRegistryTransparentProxy() public {
     // ensure non-admin cannot call TransparentProxy functions
     TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
@@ -607,7 +617,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // FVKeyManager upgrade tests
   //
-
   function testUpgradingKeyManagerImplFailsAsNonAdmin() public {
     // create a clone of the key manager
     address keyManagerv2 = Clones.clone(fvAccountRegistry.fvKeyManagerAddr());
@@ -639,7 +648,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     FVAccountRegistry(address(fvAccountRegistry)).upgradeFVKeyManager(keyManagerv2);
 
     // validate user key manager impl is updated
-    bytes32 beaconSlot = bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1);
+    bytes32 beaconSlot = bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1);
     bytes32 implAddr = vm.load(userKeyManager, beaconSlot); // load beacon address from storage
     assertEq(address(uint160(uint256(implAddr))), address(keyManagerBeacon));
 
@@ -668,7 +677,6 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // FVAccount upgrade tests
   //
-
   function testUpgradingFVAccountImplFailsAsNonAdmin() public {
     // create a clone of the account
     address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
@@ -688,10 +696,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
   function testUpgradingFVAccountImplSucceedsAsAdmin() public {
     // register a user, get the proxy address for user FV account
-    address userFVAccountProxy = address(payable(
-      LSP6KeyManagerInit(fvAccountRegistry.register(address(this)))
-        .target()
-    ));
+    address userFVAccountProxy =
+      address(payable(LSP6KeyManagerInit(fvAccountRegistry.register(address(this))).target()));
 
     // create a clone of the account
     address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
@@ -703,7 +709,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     FVAccountRegistry(address(fvAccountRegistry)).upgradeFVAccount(fvAccountv2);
 
     // validate user account impl is updated
-    bytes32 beaconSlot = bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1);
+    bytes32 beaconSlot = bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1);
     bytes32 implAddr = vm.load(userFVAccountProxy, beaconSlot); // load beacon address from storage
     assertEq(address(uint160(uint256(implAddr))), address(fvAccountBeacon));
 
@@ -718,11 +724,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     // give some permissions for storage test
     bytes memory oldData = Utils.toBytes(_PERMISSION_CALL);
     bytes32 dataKey = Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr);
-    bytes memory execData = abi.encodeWithSelector(
-        bytes4(keccak256("setData(bytes32,bytes)")),
-        dataKey,
-        oldData
-    );
+    bytes memory execData = abi.encodeWithSelector(bytes4(keccak256("setData(bytes32,bytes)")), dataKey, oldData);
     userKeyManager.execute(execData);
     assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);
 
@@ -737,5 +739,4 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(execData);
     assertEq(MockAccountUpgraded(payable(address(userKeyManager.target()))).setDataCounter(), 1);
   }
-
 }

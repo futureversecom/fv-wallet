@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# An hook to format sol files.
+
+# List staged files
+FILES=$(git diff --cached --name-only --diff-filter=ACMR | sed 's| |\\ |g')
+[ -z "$FILES" ] && exit 0
+
+# Format all selected files
+echo "$FILES" | xargs forge fmt
+
+# Add back the modified files to staging
+echo "$FILES" | xargs git add
+
+exit 0

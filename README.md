@@ -49,6 +49,12 @@ note: This bytes4 interface id is calculated as the XOR of the interfaceId of th
 
 ## Setup
 
+Install git hooks with:
+
+```sh
+git config core.hooksPath .githooks
+```
+
 ### Pre-requisites
 
 - [foundry](https://book.getfoundry.sh/getting-started/installation) must be installed
