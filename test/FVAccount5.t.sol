@@ -12,7 +12,7 @@ import "./helpers/DataHelper.t.sol";
 import "../src/LSP0ERC725AccountLateInit.sol";
 import {FVAccountRegistry} from "../src/FVAccount5.sol";
 
-contract FVAccount4RegistryTest is FVAccountRegistryBaseTest {
+contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
 
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
   FVAccountRegistry private registryImpl;
