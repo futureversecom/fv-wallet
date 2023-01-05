@@ -2,11 +2,10 @@
 pragma solidity ^0.8.17;
 
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-
-import "./FVAccount5.sol";
+import "./FVAccountRegistry.sol";
 
 contract RegistryDeployer {
-  
+
   event Deployed(address indexed proxy, address indexed registry, address indexed keyManager);
 
   constructor(address admin) {

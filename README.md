@@ -100,3 +100,22 @@ forge script script/RegistryDeployer.s.sol:Deployment --rpc-url $GOERLI_RPC_URL 
 ```
 
 ---
+
+## Testing
+
+```sh
+forge test -vvv
+```
+
+### Gas golf
+
+```sh
+forge test --gas-report
+```
+
+1. Get gas results for unit tests as starting point
+2. Make changes
+3. Rerun gas tests
+4. Compare results
+
+---
