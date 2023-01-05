@@ -100,19 +100,3 @@ forge script script/RegistryDeployer.s.sol:Deployment --rpc-url $GOERLI_RPC_URL 
 ```
 
 ---
-
-## TODO (tests)
-
-- [ ] Validate `KeyManager` implements LSP6 (validate ERC165)
-- [ ] Validate `ERC725Account` implements LSP0 (validate ERC165)
-  - [ ] Validate upgradable security via KeyManager
-  - [ ] Validate that it implements [LSP-1](https://github.com/lukso-network/LIPs/blob/main/LSPs/LSP-1-UniversalReceiver.md)
-  - [ ] Validate that it implements [ERC1271](https://eips.ethereum.org/EIPS/eip-1271)
-- [ ] Ensure upgrading the ERC725Account (impl contract KeyManager points to) works - for all registered accounts
-- [ ] Ensure all operation types work for execution
-  - 0 for call
-  - 1 for create
-  - 2 for create2
-  - 3 for staticcall
-  - 4 for delegatecall
-- [ ] Verify storage updates on minimal proxy contract

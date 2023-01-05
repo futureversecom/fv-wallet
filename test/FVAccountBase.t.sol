@@ -2,13 +2,17 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
+import {IERC725X} from "@erc725/smart-contracts/contracts/interfaces/IERC725X.sol";
+import {IERC725Y} from "@erc725/smart-contracts/contracts/interfaces/IERC725Y.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInit.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account.sol";
-import {IERC725Y} from "@erc725/smart-contracts/contracts/interfaces/IERC725Y.sol";
-import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
+import {ILSP1UniversalReceiver} from "@lukso/lsp-smart-contracts/contracts/LSP1UniversalReceiver/ILSP1UniversalReceiver.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
+import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
+import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IFVAccountRegistry} from "../src/IFVAccountRegistry.sol";
 import "../src/Utils.sol";
@@ -38,6 +42,33 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   function setUp() public virtual {
     mockERC20 = new MockERC20();
   }
+
+  //
+  // Interfaces
+  //
+
+  function testKeyManagerInterfaces() public {
+    IERC165 userKeyManager = IERC165(fvAccountRegistry.register(address(0)));
+
+    assertTrue(userKeyManager.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
+    assertTrue(userKeyManager.supportsInterface(type(IERC1271).interfaceId), "ERC1271 support");
+    assertTrue(userKeyManager.supportsInterface(type(ILSP6KeyManager).interfaceId), "LSP6 support");
+  }
+
+  function testAccountInterfaces() public {
+    address userKeyManager = fvAccountRegistry.register(address(0));
+    IERC165 userFVWalletProxy = IERC165(ILSP6KeyManager(userKeyManager).target());
+
+    assertTrue(userFVWalletProxy.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
+    assertTrue(userFVWalletProxy.supportsInterface(type(IERC1271).interfaceId), "ERC1271 support");
+    assertTrue(userFVWalletProxy.supportsInterface(type(ILSP1UniversalReceiver).interfaceId), "LSP1 support");
+    assertTrue(userFVWalletProxy.supportsInterface(type(IERC725X).interfaceId), "ERC725X support");
+    assertTrue(userFVWalletProxy.supportsInterface(type(IERC725Y).interfaceId), "ERC725Y support");
+  }
+
+  //
+  // Initialising
+  //
 
   function testFVAccountImplCannotBeInitializedTwice() public virtual {
     LSP0ERC725AccountInit fvAccount = LSP0ERC725AccountInit(payable(fvAccountRegistry.fvAccountAddr()));
@@ -70,6 +101,10 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     bytes memory registryPermissions = fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry)));
     assertEq(registryPermissions, bytes(""));
   }
+
+  //
+  // Register
+  //
 
   function testRegisterOfZeroAddress() public virtual {
     // ignore 2nd param of event (not deterministic)
@@ -122,7 +157,6 @@ abstract contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     assertEq(mockERC20.balanceOf(address(this)), 100);
   }
-  
 
   //
   // Test CALL permissions
