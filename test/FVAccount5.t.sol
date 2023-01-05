@@ -4,7 +4,6 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import {LSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManager.sol";
 import {LSP6KeyManagerInit} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 
 import "./FVAccountBase.t.sol";
@@ -151,8 +150,22 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     proxy.upgradeToAndCall(initializableMock, abi.encodeWithSignature("initialize()")); // new initialize function without key-manager
   }
 
+  function testRegistrationsRetainAfterProxyUpgrade() public {
+    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
+
+    // register address
+    address expected = fvAccountRegistry.register(address(this));
+
+    // upgrade
+    address fvAccountRegistryV2 = Clones.clone(address(registryImpl));
+    vm.prank(admin);
+    proxy.upgradeTo(fvAccountRegistryV2);
+
+    assertEq(expected, FVAccountRegistry(address(proxy)).identityOf(address(this)));
+  }
+
   //
-  // FVAccount & FVKeyManager upgrade tests
+  // FVKeyManager upgrade tests
   //
 
   function testUpgradingKeyManagerImplFailsAsNonAdmin() public {
@@ -194,6 +207,28 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
     assertEq(keyManagerBeacon.implementation(), keyManagerv2);
   }
 
+  function testFVKeyManagerStorageUpgrading() public {
+    // register a user
+    address userKeyManager = fvAccountRegistry.register(address(this));
+
+    address oldTarget = LSP6KeyManagerInit(userKeyManager).target();
+
+    // upgrade
+    address keyManagerv2 = address(new MockKeyManagerUpgraded());
+    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVKeyManager(keyManagerv2);
+
+    // test old storage
+    assertEq(oldTarget, LSP6KeyManagerInit(userKeyManager).target());
+
+    // test new storage
+    MockKeyManagerUpgraded(userKeyManager).incrementVal();
+    assertEq(1, MockKeyManagerUpgraded(userKeyManager).val());
+  }
+
+  //
+  // FVAccount upgrade tests
+  //
+
   function testUpgradingFVAccountImplFailsAsNonAdmin() public {
     // create a clone of the account
     address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
@@ -214,7 +249,7 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
   function testUpgradingFVAccountImplSucceedsAsAdmin() public {
     // register a user, get the proxy address for user FV account
     address userFVAccountProxy = address(payable(
-      LSP6KeyManager(fvAccountRegistry.register(address(this)))
+      LSP6KeyManagerInit(fvAccountRegistry.register(address(this)))
         .target()
     ));
 
@@ -234,6 +269,35 @@ contract FVAccount5RegistryTest is FVAccountRegistryBaseTest {
 
     // validate that the beacon impl address is updated (also implying that the user account impl is updated)
     assertEq(fvAccountBeacon.implementation(), fvAccountv2);
+  }
+
+  function testFVAccountStorageUpgrading() public {
+    // register a user
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+
+    // give some permissions for storage test
+    address gameAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
+    bytes memory oldData = Utils.toBytes(_PERMISSION_CALL);
+    bytes32 dataKey = Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr);
+    bytes memory execData = abi.encodeWithSelector(
+        bytes4(keccak256("setData(bytes32,bytes)")),
+        dataKey,
+        oldData
+    );
+    userKeyManager.execute(execData);
+    assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);
+
+    // upgrade
+    address fvAccountv2 = address(new MockAccountUpgraded());
+    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVAccount(fvAccountv2);
+    console.log("Upgraded");
+
+    // test old storage
+    assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);
+
+    // test new storage
+    userKeyManager.execute(execData);
+    assertEq(MockAccountUpgraded(payable(address(userKeyManager.target()))).setDataCounter(), 1);
   }
 
 }
