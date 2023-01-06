@@ -15,9 +15,9 @@ contract DataHelper {
   using ECDSA for bytes32;
 
   // Construct call data for calling mint on the mockERC20
-  function createERC20ExecuteDataForCall(MockERC20 _mockERC20) internal view returns (bytes memory) {
-    // abi encoded call to mint 100 tokens to address(this)
-    bytes memory mintCall = abi.encodeWithSelector(_mockERC20.mint.selector, address(this), 100);
+  function createERC20ExecuteDataForCall(MockERC20 _mockERC20) internal pure returns (bytes memory) {
+    // abi encoded call to mint 100 tokens to the caller
+    bytes memory mintCall = abi.encodeWithSelector(_mockERC20.mintCaller.selector, 100);
     // abi encoded call to execute mint call
     bytes memory executeCall = abi.encodeWithSignature(
       "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
