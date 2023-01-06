@@ -541,7 +541,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.expectRevert("Initializable: contract is already initialized");
 
-    registry.initialize(keyManagerImpl);
+    registry.initialize(address(keyManagerImpl));
   }
 
   //

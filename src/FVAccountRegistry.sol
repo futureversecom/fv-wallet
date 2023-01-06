@@ -6,7 +6,6 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import {LSP6KeyManagerInit} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
 
 import {IFVAccountRegistry} from "./IFVAccountRegistry.sol";
 import {LSP0ERC725AccountLateInit} from "./LSP0ERC725AccountLateInit.sol";
@@ -34,7 +33,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
    * @dev Deploys the account implementation so this contract is the owner.
    * @dev Deploys beacons for these implementations.
    */
-  function initialize(LSP6KeyManagerInit fvKeyManager) external virtual initializer {
+  function initialize(address fvKeyManager) external virtual initializer {
     // init initializers
     __Ownable_init();
 
@@ -43,7 +42,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
 
     // Deploy beacons for the contracts (which user wallet proxies will point to)
     fvAccountBeacon = new UpgradeableBeacon(address(fvAccount));
-    fvKeyManagerBeacon = new UpgradeableBeacon(address(fvKeyManager));
+    fvKeyManagerBeacon = new UpgradeableBeacon(fvKeyManager);
   }
 
   //
@@ -122,12 +121,12 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-                  address(fvKeyManagerBeacon),
-                  abi.encodeWithSignature(
-                      "initialize(address)",
-                      address(userFVAccountProxy)
-                  )
-              )
+                        address(fvKeyManagerBeacon),
+                        abi.encodeWithSignature(
+                            "initialize(address)",
+                            address(userFVAccountProxy)
+                        )
+                    )
     );
 
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
