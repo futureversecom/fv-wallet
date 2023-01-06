@@ -9,13 +9,43 @@ interface IFVAccountRegistry {
    */
   event AccountRegistered(address indexed account, address indexed wallet);
 
-  function register(address _addr) external returns (address);
+  /**
+   * Get the account for a given address.
+   * @param _addr The address to look up.
+   * @return account The account.
+   */
+  function identityOf(address _addr) external view returns (address account);
 
-  function predictProxyWalletKeyManagerAddress(address _addr) external returns (address);
+  /**
+   * Get the key manager implementation.
+   * @return keyManager The key manager implementation.
+   */
+  function fvKeyManagerAddr() external view returns (address keyManager);
 
-  function identityOf(address _addr) external view returns (address);
+  /**
+   * Get the account implementation.
+   * @return account The account implementation.
+   */
+  function fvAccountAddr() external view returns (address account);
 
-  function fvAccountAddr() external view returns (address);
+  /**
+   * Register a key manager and account for a given address.
+   * @param _addr The address to create a key manager and account for.
+   * @return keyManager The registered key manager for the user.
+   */
+  function register(address _addr) external returns (address keyManager);
 
-  function fvKeyManagerAddr() external view returns (address);
+  /**
+   * Predict the key manager address for a given address.
+   * @param _addr The address to look up.
+   * @return keyManager The predicted key manager address.
+   */
+  function predictProxyKeyManagerAddress(address _addr) external returns (address keyManager);
+
+  /**
+   * Predict the account address for a given address.
+   * @param _addr The address to look up.
+   * @return account The predicted account address.
+   */
+  function predictProxyAccountAddress(address _addr) external returns (address account);
 }

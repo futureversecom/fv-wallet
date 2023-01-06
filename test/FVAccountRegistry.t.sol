@@ -142,8 +142,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   function testRegisterOfZeroAddress() public {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyKeyManager =
-      IFVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(0));
+    address proxyKeyManager = IFVAccountRegistry(address(fvAccountRegistry)).predictProxyKeyManagerAddress(address(0));
 
     // We emit the event we expect to see.
     emit AccountRegistered(address(0), proxyKeyManager);
@@ -156,7 +155,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
     address proxyKeyManager =
-      IFVAccountRegistry(address(fvAccountRegistry)).predictProxyWalletKeyManagerAddress(address(this));
+      IFVAccountRegistry(address(fvAccountRegistry)).predictProxyKeyManagerAddress(address(this));
 
     emit AccountRegistered(address(this), proxyKeyManager);
 

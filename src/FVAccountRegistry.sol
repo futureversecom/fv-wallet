@@ -12,8 +12,10 @@ import {IFVAccountRegistry} from "./IFVAccountRegistry.sol";
 import {LSP0ERC725AccountLateInit} from "./LSP0ERC725AccountLateInit.sol";
 import "./Utils.sol";
 
-// v4 base
-
+/**
+ * FV Account Registry
+ * A manager for user accounts in the Futureverse ecosystem.
+ */
 contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAccountRegistry {
   using Utils for string;
 
@@ -25,6 +27,13 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     _disableInitializers();
   }
 
+  /**
+   * Initialize the Account Registry contract.
+   * @param fvKeyManager The key manager implementation to use.
+   * @dev This can only be called once on creation.
+   * @dev Deploys the account implementation so this contract is the owner.
+   * @dev Deploys beacons for these implementations.
+   */
   function initialize(LSP6KeyManagerInit fvKeyManager) external virtual initializer {
     // init initializers
     __Ownable_init();
@@ -37,7 +46,67 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     fvKeyManagerBeacon = new UpgradeableBeacon(address(fvKeyManager));
   }
 
-  function register(address _addr) public returns (address) {
+  //
+  // Getters
+  //
+
+  /**
+   * Get the account for a given address.
+   * @param _addr The address to look up.
+   * @return account The account.
+   */
+  function identityOf(address _addr) external view returns (address account) {
+    return accounts[_addr];
+  }
+
+  /**
+   * Get the key manager implementation.
+   * @return keyManager The key manager implementation.
+   */
+  function fvKeyManagerAddr() external view returns (address keyManager) {
+    return fvKeyManagerBeacon.implementation();
+  }
+
+  /**
+   * Get the account implementation.
+   * @return account The account implementation.
+   */
+  function fvAccountAddr() external view returns (address account) {
+    return fvAccountBeacon.implementation();
+  }
+
+  //
+  // Admin
+  //
+
+  /**
+   * Upgrade the key manager implementation.
+   * @param _newImplementation The new implementation address.
+   * @dev This can only be called by the contract owner.
+   */
+  function upgradeFVKeyManager(address _newImplementation) external onlyOwner {
+    fvKeyManagerBeacon.upgradeTo(_newImplementation);
+  }
+
+  /**
+   * Upgrade the account implementation.
+   * @param _newImplementation The new implementation address.
+   * @dev This can only be called by the contract owner.
+   */
+  function upgradeFVAccount(address _newImplementation) external onlyOwner {
+    fvAccountBeacon.upgradeTo(_newImplementation);
+  }
+
+  //
+  // Register
+  //
+
+  /**
+   * Register a key manager and account for a given address.
+   * @param _addr The address to create a key manager and account for.
+   * @return keyManager The registered key manager for the user.
+   */
+  function register(address _addr) public returns (address keyManager) {
     if (accounts[_addr] != address(0)) {
       revert AccountAlreadyExists(_addr);
     }
@@ -51,66 +120,69 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
         );
 
     // deploy KeyManager proxy - using Create2
-    BeaconProxy userFVKeyManagerProxy = new BeaconProxy{salt: salt}(
-            address(fvKeyManagerBeacon),
-            abi.encodeWithSignature(
-                "initialize(address)",
-                address(userFVAccountProxy)
-            )
-        );
-
-    LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
-      address(userFVKeyManagerProxy),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr),
-      ALL_PERMISSIONS.toBytes()
+    keyManager = address(
+      new BeaconProxy{salt: salt}(
+                  address(fvKeyManagerBeacon),
+                  abi.encodeWithSignature(
+                      "initialize(address)",
+                      address(userFVAccountProxy)
+                  )
+              )
     );
 
-    accounts[_addr] = address(userFVKeyManagerProxy);
+    LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
+      keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr), ALL_PERMISSIONS.toBytes()
+    );
 
-    emit AccountRegistered(_addr, address(userFVKeyManagerProxy));
+    accounts[_addr] = keyManager;
 
-    return address(userFVKeyManagerProxy);
+    emit AccountRegistered(_addr, keyManager);
+
+    return keyManager;
   }
 
-  function identityOf(address _addr) public view returns (address) {
-    return accounts[_addr];
-  }
-
-  function fvAccountAddr() external view returns (address) {
-    return fvAccountBeacon.implementation();
-  }
-
-  function fvKeyManagerAddr() external view returns (address) {
-    return fvKeyManagerBeacon.implementation();
-  }
-
-  function predictProxyWalletAddress(address userAddr) public view returns (address) {
-    bytes memory bytecodeWithConstructor =
-      abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
-    return predictAddress(userAddr, bytecodeWithConstructor);
-  }
-
-  function predictProxyWalletKeyManagerAddress(address userAddr) public view returns (address) {
-    address proxyWalletAddress = predictProxyWalletAddress(userAddr);
+  /**
+   * Predict the key manager address for a given address.
+   * @param _addr The address to look up.
+   * @return keyManager The predicted key manager address.
+   */
+  function predictProxyKeyManagerAddress(address _addr) public view returns (address keyManager) {
+    address proxyWalletAddress = predictProxyAccountAddress(_addr);
     bytes memory bytecodeWithConstructor = abi.encodePacked(
       type(BeaconProxy).creationCode,
       abi.encode(fvKeyManagerBeacon, abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress)))
     );
-    return predictAddress(userAddr, bytecodeWithConstructor);
+    return predictAddress(_addr, bytecodeWithConstructor);
   }
 
-  function upgradeFVAccount(address _newImplementation) external onlyOwner {
-    fvAccountBeacon.upgradeTo(_newImplementation);
+  /**
+   * Predict the account address for a given address.
+   * @param _addr The address to look up.
+   * @return account The predicted account address.
+   */
+  function predictProxyAccountAddress(address _addr) public view returns (address account) {
+    bytes memory bytecodeWithConstructor =
+      abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
+    return predictAddress(_addr, bytecodeWithConstructor);
   }
 
-  function upgradeFVKeyManager(address _newImplementation) external onlyOwner {
-    fvKeyManagerBeacon.upgradeTo(_newImplementation);
-  }
+  //
+  // Helpers
+  //
 
+  /**
+   * @dev See {IERC165-supportsInterface}.
+   */
   function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
     return interfaceId == type(IFVAccountRegistry).interfaceId || super.supportsInterface(interfaceId);
   }
 
+  /**
+   * Predict the address for a contract deployed with CREATE2.
+   * @param saltAddr The deployment salt.
+   * @param bytecodeWithConstructor The deployed bytecode.
+   * @return addr The predicted address.
+   */
   function predictAddress(address saltAddr, bytes memory bytecodeWithConstructor) internal view returns (address addr) {
     bytes32 salt = keccak256(abi.encodePacked(saltAddr));
     bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecodeWithConstructor)));
