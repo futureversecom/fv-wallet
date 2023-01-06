@@ -74,6 +74,13 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Interfaces
   //
+  function testAccountRegistryInterfaces() public {
+    IERC165 registry = IERC165(address(fvAccountRegistry));
+
+    assertTrue(registry.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
+    assertTrue(registry.supportsInterface(type(IFVAccountRegistry).interfaceId), "FVAccountRegistry support");
+  }
+
   function testKeyManagerInterfaces() public {
     IERC165 userKeyManager = IERC165(fvAccountRegistry.register(address(0)));
 
