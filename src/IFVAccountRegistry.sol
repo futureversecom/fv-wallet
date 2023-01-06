@@ -3,18 +3,25 @@ pragma solidity ^0.8.17;
 
 interface IFVAccountRegistry {
   /**
-   * @notice Emitted when registering a new address
-   * @param account The address of the account registered
-   * @param wallet The address of the wallet (key manager) registered for the account
+   * @notice Emitted when registering a new address.
+   * @param account The address of the account registered.
+   * @param wallet The address of the wallet (key manager) registered for the account.
    */
   event AccountRegistered(address indexed account, address indexed wallet);
+
+  /**
+   * Get the key manager for a given address.
+   * @param _addr The address to look up.
+   * @return keyManager The key manager.
+   */
+  function keyManagerOf(address _addr) external view returns (address keyManager);
 
   /**
    * Get the account for a given address.
    * @param _addr The address to look up.
    * @return account The account.
    */
-  function identityOf(address _addr) external view returns (address account);
+  function accountOf(address _addr) external view returns (address account);
 
   /**
    * Get the key manager implementation.

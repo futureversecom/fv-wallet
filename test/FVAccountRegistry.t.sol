@@ -139,6 +139,14 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Register
   //
+  function testUnregistedErrors() public {
+    address zero = address(0);
+    vm.expectRevert(abi.encodeWithSelector(AccountNotRegistered.selector, zero));
+    IFVAccountRegistry(address(fvAccountRegistry)).accountOf(zero);
+    vm.expectRevert(abi.encodeWithSelector(AccountNotRegistered.selector, zero));
+    IFVAccountRegistry(address(fvAccountRegistry)).keyManagerOf(zero);
+  }
+
   function testRegisterOfZeroAddress() public {
     vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
 
@@ -164,7 +172,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     stopMeasuringGas();
     assertTrue(userKeyManagerAddr != address(0));
 
-    assertEq(fvAccountRegistry.identityOf(address(this)), userKeyManagerAddr);
+    assertEq(fvAccountRegistry.keyManagerOf(address(this)), userKeyManagerAddr);
   }
 
   function testRegisterFailsForMultipleRegistrations() public {
@@ -178,20 +186,14 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   function testRegisteredUserCanCallExternalContract() public {
     address userKeyManagerAddr = fvAccountRegistry.register(address(this));
 
-    // abi encoded call to mint 100 tokens to address(this)
-    bytes memory mintCall = abi.encodeWithSelector(mockERC20.mint.selector, address(this), 100);
-
     // abi encoded call to execute mint call
-    bytes memory executeCall = abi.encodeWithSignature(
-      "execute(uint256,address,uint256,bytes)", // operationType, target, value, data
-      0,
-      address(mockERC20),
-      0,
-      mintCall
-    );
+    bytes memory executeCall = createERC20ExecuteDataForCall(mockERC20);
     ILSP6KeyManager(userKeyManagerAddr).execute(executeCall);
 
-    assertEq(mockERC20.balanceOf(address(this)), 100);
+    // Caller of mint should be account of registered address
+    address registeredAccount = fvAccountRegistry.accountOf(address(this));
+    assertEq(ILSP6KeyManager(userKeyManagerAddr).target(), registeredAccount);
+    assertEq(mockERC20.balanceOf(registeredAccount), 100);
   }
 
   //
@@ -205,7 +207,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
-  function testCallAuthedExternalAccounWrongContractFails() public {
+  function testCallAuthedExternalAccountWrongContractFails() public {
     ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
 
     // Give call permission
@@ -231,7 +233,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.prank(gameAddr);
     vm.expectRevert(
-      abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mint.selector)
+      abi.encodeWithSelector(NotAllowedCall.selector, gameAddr, address(mockERC20), mockERC20.mintCaller.selector)
     );
     userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
@@ -261,7 +263,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
     stopMeasuringGas();
 
-    assertEq(mockERC20.balanceOf(address(this)), 100);
+    assertEq(mockERC20.balanceOf(userKeyManager.target()), 100);
   }
 
   function testCallAuthedExternalAccountMultipleContract() public {
@@ -293,8 +295,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20B));
     stopMeasuringGas();
 
-    assertEq(mockERC20.balanceOf(address(this)), 100);
-    assertEq(mockERC20B.balanceOf(address(this)), 100);
+    assertEq(mockERC20.balanceOf(userKeyManager.target()), 100);
+    assertEq(mockERC20B.balanceOf(userKeyManager.target()), 100);
   }
 
   //
@@ -527,7 +529,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.executeRelayCall(signature, 0, payload);
     stopMeasuringGas();
 
-    assertEq(mockERC20.balanceOf(address(this)), 100);
+    assertEq(mockERC20.balanceOf(userKeyManager.target()), 100);
   }
 
   function testFVAccountRegistryCannotBeInitializedTwice() public {
@@ -617,7 +619,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     vm.prank(admin);
     proxy.upgradeTo(fvAccountRegistryV2);
 
-    assertEq(expected, FVAccountRegistry(address(proxy)).identityOf(address(this)));
+    assertEq(expected, FVAccountRegistry(address(proxy)).keyManagerOf(address(this)));
   }
 
   //

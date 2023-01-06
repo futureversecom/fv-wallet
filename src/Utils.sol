@@ -7,6 +7,12 @@ pragma solidity ^0.8.17;
  */
 error AccountAlreadyExists(address addr);
 
+/**
+ * @dev Thrown when an account is not found for the given address.
+ * @param addr The address that does not have a registered account.
+ */
+error AccountNotRegistered(address addr);
+
 // All Permissions currently exclude REENTRANCY, DELEGATECALL and SUPER_DELEGATECALL for security
 // source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182
 string constant ALL_PERMISSIONS = "00000000000000000000000000000000000000000000000000000000003f3f7f";

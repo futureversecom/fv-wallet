@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -20,7 +21,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
 
   UpgradeableBeacon public fvAccountBeacon;
   UpgradeableBeacon public fvKeyManagerBeacon;
-  mapping(address => address) internal accounts;
+  mapping(address => address) internal managers;
 
   constructor() {
     _disableInitializers();
@@ -50,12 +51,26 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   //
 
   /**
+   * Get the key manager for a given address.
+   * @param _addr The address to look up.
+   * @return keyManager The key manager.
+   */
+  function keyManagerOf(address _addr) public view returns (address keyManager) {
+    keyManager = managers[_addr];
+    if (keyManager == address(0)) {
+      revert AccountNotRegistered(_addr);
+    }
+    return keyManager;
+  }
+
+  /**
    * Get the account for a given address.
    * @param _addr The address to look up.
    * @return account The account.
    */
-  function identityOf(address _addr) external view returns (address account) {
-    return accounts[_addr];
+  function accountOf(address _addr) external view returns (address account) {
+    address keyManager = keyManagerOf(_addr);
+    return ILSP6KeyManager(keyManager).target();
   }
 
   /**
@@ -106,7 +121,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
    * @return keyManager The registered key manager for the user.
    */
   function register(address _addr) public returns (address keyManager) {
-    if (accounts[_addr] != address(0)) {
+    if (managers[_addr] != address(0)) {
       revert AccountAlreadyExists(_addr);
     }
 
@@ -121,19 +136,19 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-                        address(fvKeyManagerBeacon),
-                        abi.encodeWithSignature(
-                            "initialize(address)",
-                            address(userFVAccountProxy)
-                        )
-                    )
+                              address(fvKeyManagerBeacon),
+                              abi.encodeWithSignature(
+                                  "initialize(address)",
+                                  address(userFVAccountProxy)
+                              )
+                          )
     );
 
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
       keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr), ALL_PERMISSIONS.toBytes()
     );
 
-    accounts[_addr] = keyManager;
+    managers[_addr] = keyManager;
 
     emit AccountRegistered(_addr, keyManager);
 
