@@ -17,9 +17,9 @@ error AccountNotRegistered(address addr);
 // source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182
 string constant ALL_PERMISSIONS = "00000000000000000000000000000000000000000000000000000000003f3f7f";
 string constant NO_PERMISSION = "0000000000000000000000000000000000000000000000000000000000000000";
-string constant KEY_ADDRESSPERMISSIONS_PERMISSIONS = "4b80742de2bf82acb3630000";
-string constant KEY_ADDRESSPERMISSIONS_ALLOWEDADDRESSES = "4b80742de2bfc6dd6b3c0000";
-string constant KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS = "4b80742de2bf393a64c70000";
+bytes12 constant KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX = 0x4b80742de2bf82acb3630000;
+bytes12 constant KEY_ADDRESSPERMISSIONS_ALLOWEDADDRESSES_PREFIX = 0x4b80742de2bfc6dd6b3c0000;
+bytes12 constant KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS_PREFIX = 0x4b80742de2bf393a64c70000;
 
 library Utils {
   bytes16 private constant SYMBOLS = "0123456789abcdef";
@@ -77,7 +77,13 @@ library Utils {
     return r;
   }
 
-  function permissionsKey(string memory permissionKey, address _addr) public pure returns (bytes32) {
-    return bytes32(toBytes(string.concat(permissionKey, toHexStringNoPrefix(_addr))));
+  /**
+   * Concat the permission key prefix and address.
+   * @param permissionPrefix The permission key prefix.
+   * @param addr The address.
+   * @return bytes32 The combined permissions key.
+   */
+  function permissionsKey(bytes12 permissionPrefix, address addr) public pure returns (bytes32) {
+    return bytes32(bytes.concat(permissionPrefix, bytes20(addr)));
   }
 }

@@ -132,7 +132,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   function testFVAccountRegistryHasNoPermissions() public {
     LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
     bytes memory registryPermissions =
-      fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, address(fvAccountRegistry)));
+      fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, address(fvAccountRegistry)));
     assertEq(registryPermissions, bytes(""));
   }
 
@@ -213,7 +213,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, gameAddr), // AddressPermissions:Permissions
       Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     startMeasuringGas("userKeyManager.execute() add call permission");
@@ -224,7 +224,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     allowed[0] = gameAddr;
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS_PREFIX, gameAddr), // AddressPermissions:AllowedCalls
       createCallContractWhitelistData(allowed)
     );
     startMeasuringGas("userKeyManager.execute() add call contract permission");
@@ -244,7 +244,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, gameAddr), // AddressPermissions:Permissions
       Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     userKeyManager.execute(execData);
@@ -253,7 +253,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     allowed[0] = address(mockERC20);
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS_PREFIX, gameAddr), // AddressPermissions:AllowedCalls
       createCallContractWhitelistData(allowed)
     );
     userKeyManager.execute(execData);
@@ -273,7 +273,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr), // AddressPermissions:Permissions
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, gameAddr), // AddressPermissions:Permissions
       Utils.toBytes(_PERMISSION_CALL) // Call only
     );
     userKeyManager.execute(execData);
@@ -282,7 +282,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     allowed[0] = address(mockERC20);
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
-      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, gameAddr), // AddressPermissions:AllowedCalls
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS_PREFIX, gameAddr), // AddressPermissions:AllowedCalls
       createCallContractWhitelistData(allowed)
     );
     userKeyManager.execute(execData);
@@ -321,7 +321,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, userAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_DEPLOY) // CREATE/CREATE2 only
       )
     );
@@ -366,7 +366,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, userAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_DEPLOY) // CREATE/CREATE2 only
       )
     );
@@ -419,7 +419,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, userAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_STATICCALL) // STATICCALL only
       )
     );
@@ -430,7 +430,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, userAddr), // AddressPermissions:AllowedCalls
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS_PREFIX, userAddr), // AddressPermissions:AllowedCalls
         createCallContractWhitelistData(allowed)
       )
     );
@@ -486,7 +486,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, userAddr), // AddressPermissions:Permissions
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, userAddr), // AddressPermissions:Permissions
         Utils.toBytes(_PERMISSION_DELEGATECALL) // DELEGATECALL only
       )
     );
@@ -497,7 +497,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(
       abi.encodeWithSelector(
         bytes4(keccak256("setData(bytes32,bytes)")),
-        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS, userAddr), // AddressPermissions:AllowedCalls
+        Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS_PREFIX, userAddr), // AddressPermissions:AllowedCalls
         createCallContractWhitelistData(allowed)
       )
     );
@@ -731,7 +731,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     // give some permissions for storage test
     bytes memory oldData = Utils.toBytes(_PERMISSION_CALL);
-    bytes32 dataKey = Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, gameAddr);
+    bytes32 dataKey = Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, gameAddr);
     bytes memory execData = abi.encodeWithSelector(bytes4(keccak256("setData(bytes32,bytes)")), dataKey, oldData);
     userKeyManager.execute(execData);
     assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);

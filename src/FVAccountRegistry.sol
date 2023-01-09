@@ -136,16 +136,16 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-                              address(fvKeyManagerBeacon),
-                              abi.encodeWithSignature(
-                                  "initialize(address)",
-                                  address(userFVAccountProxy)
-                              )
-                          )
+                                    address(fvKeyManagerBeacon),
+                                    abi.encodeWithSignature(
+                                        "initialize(address)",
+                                        address(userFVAccountProxy)
+                                    )
+                                )
     );
 
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
-      keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS, _addr), ALL_PERMISSIONS.toBytes()
+      keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, _addr), ALL_PERMISSIONS.toBytes()
     );
 
     managers[_addr] = keyManager;
