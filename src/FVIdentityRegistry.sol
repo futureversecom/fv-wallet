@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -10,6 +9,7 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
 
 import {IFVIdentityRegistry} from "./IFVIdentityRegistry.sol";
 import {FVIdentity} from "./FVIdentity.sol";
+import {FVKeyManager} from "./FVKeyManager.sol";
 import "./Utils.sol";
 
 /**
@@ -69,7 +69,7 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    */
   function identityOf(address _addr) external view returns (address identity) {
     address keyManager = keyManagerOf(_addr);
-    return ILSP6KeyManager(keyManager).target();
+    return FVKeyManager(keyManager).target();
   }
 
   /**
@@ -128,19 +128,20 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
 
     // deploy ERC725Account proxy - using Create2
     BeaconProxy userFVIdentityProxy = new BeaconProxy{salt: salt}(
-            address(fvIdentityBeacon),
-            bytes("") // dont `initialize` (done below)
-        );
+      address(fvIdentityBeacon),
+      bytes("") // dont `initialize` (done below)
+    );
 
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-                                          address(fvKeyManagerBeacon),
-                                          abi.encodeWithSignature(
-                                              "initialize(address)",
-                                              address(userFVIdentityProxy)
-                                          )
-                                      )
+              address(fvKeyManagerBeacon),
+              abi.encodeWithSignature(
+                "initialize(address,address)",
+                address(userFVIdentityProxy),
+                _addr
+              )
+            )
     );
 
     FVIdentity(payable(address(userFVIdentityProxy))).initialize(
@@ -149,7 +150,7 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
 
     managers[_addr] = keyManager;
 
-    emit IdentityRegistered(_addr, keyManager);
+    emit IdentityRegistered(_addr, keyManager, address(userFVIdentityProxy));
 
     return keyManager;
   }
@@ -163,7 +164,9 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
     address proxyWalletAddress = predictProxyIdentityAddress(_addr);
     bytes memory bytecodeWithConstructor = abi.encodePacked(
       type(BeaconProxy).creationCode,
-      abi.encode(fvKeyManagerBeacon, abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress)))
+      abi.encode(
+        fvKeyManagerBeacon, abi.encodeWithSignature("initialize(address,address)", address(proxyWalletAddress), _addr)
+      )
     );
     return predictAddress(_addr, bytecodeWithConstructor);
   }

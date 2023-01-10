@@ -4,10 +4,11 @@ pragma solidity ^0.8.17;
 interface IFVIdentityRegistry {
   /**
    * @notice Emitted when registering a new address.
+   * @param owner The address of the owner registered for the identity.
+   * @param keyManager The address of the key manager registered for the owner.
    * @param identity The address of the identity registered.
-   * @param wallet The address of the wallet (key manager) registered for the identity.
    */
-  event IdentityRegistered(address indexed identity, address indexed wallet);
+  event IdentityRegistered(address indexed owner, address indexed keyManager, address indexed identity);
 
   /**
    * Get the key manager for a given address.
