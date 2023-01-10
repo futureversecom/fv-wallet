@@ -117,14 +117,15 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
   /**
    * Register a key manager and identity for a given address.
    * @param _addr The address to create a key manager and identity for.
+   * @param nonce A nonce to support addresses that register multiple times (after a transfer).
    * @return keyManager The registered key manager for the user.
    */
-  function register(address _addr) public returns (address keyManager) {
+  function register(address _addr, uint96 nonce) public returns (address keyManager) {
     if (managers[_addr] != address(0)) {
       revert IdentityAlreadyExists(_addr);
     }
 
-    bytes32 salt = keccak256(abi.encodePacked(_addr));
+    bytes32 salt = keccak256(abi.encodePacked(_addr, nonce));
 
     // deploy ERC725Account proxy - using Create2
     BeaconProxy userFVIdentityProxy = new BeaconProxy{salt: salt}(
@@ -135,14 +136,14 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-                    address(fvKeyManagerBeacon),
-                    abi.encodeWithSignature(
-                      "initialize(address,address,address)",
-                      address(userFVIdentityProxy),
-                      _addr,
-                      address(this)
-                    )
-                  )
+                          address(fvKeyManagerBeacon),
+                          abi.encodeWithSignature(
+                            "initialize(address,address,address)",
+                            address(userFVIdentityProxy),
+                            _addr,
+                            address(this)
+                          )
+                        )
     );
 
     FVIdentity(payable(address(userFVIdentityProxy))).initialize(
@@ -159,10 +160,11 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
   /**
    * Predict the key manager address for a given address.
    * @param _addr The address to look up.
+   * @param nonce A nonce to support addresses that register multiple times (after a transfer).
    * @return keyManager The predicted key manager address.
    */
-  function predictProxyKeyManagerAddress(address _addr) public view returns (address keyManager) {
-    address proxyWalletAddress = predictProxyIdentityAddress(_addr);
+  function predictProxyKeyManagerAddress(address _addr, uint96 nonce) public view returns (address keyManager) {
+    address proxyWalletAddress = predictProxyIdentityAddress(_addr, nonce);
     bytes memory bytecodeWithConstructor = abi.encodePacked(
       type(BeaconProxy).creationCode,
       abi.encode(
@@ -170,18 +172,19 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
         abi.encodeWithSignature("initialize(address,address,address)", address(proxyWalletAddress), _addr, address(this))
       )
     );
-    return predictAddress(_addr, bytecodeWithConstructor);
+    return predictAddress(_addr, bytecodeWithConstructor, nonce);
   }
 
   /**
    * Predict the identity address for a given address.
    * @param _addr The address to look up.
+   * @param nonce A nonce to support addresses that register multiple times (after a transfer).
    * @return identity The predicted identity address.
    */
-  function predictProxyIdentityAddress(address _addr) public view returns (address identity) {
+  function predictProxyIdentityAddress(address _addr, uint96 nonce) public view returns (address identity) {
     bytes memory bytecodeWithConstructor =
       abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvIdentityBeacon, bytes("")));
-    return predictAddress(_addr, bytecodeWithConstructor);
+    return predictAddress(_addr, bytecodeWithConstructor, nonce);
   }
 
   /**
@@ -214,10 +217,15 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    * Predict the address for a contract deployed with CREATE2.
    * @param saltAddr The deployment salt.
    * @param bytecodeWithConstructor The deployed bytecode.
+   * @param nonce A nonce for addresses that register multiple times.
    * @return addr The predicted address.
    */
-  function predictAddress(address saltAddr, bytes memory bytecodeWithConstructor) internal view returns (address addr) {
-    bytes32 salt = keccak256(abi.encodePacked(saltAddr));
+  function predictAddress(address saltAddr, bytes memory bytecodeWithConstructor, uint96 nonce)
+    internal
+    view
+    returns (address addr)
+  {
+    bytes32 salt = keccak256(abi.encodePacked(saltAddr, nonce));
     bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecodeWithConstructor)));
     return address(uint160(uint256(hash)));
   }

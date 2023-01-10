@@ -47,23 +47,26 @@ interface IFVIdentityRegistry {
   /**
    * Register a key manager and identity for a given address.
    * @param _addr The address to create a key manager and identity for.
+   * @param nonce A nonce to support addresses that register multiple times (after a transfer).
    * @return keyManager The registered key manager for the user.
    */
-  function register(address _addr) external returns (address keyManager);
+  function register(address _addr, uint96 nonce) external returns (address keyManager);
 
   /**
    * Predict the key manager address for a given address.
    * @param _addr The address to look up.
+   * @param nonce A nonce to support addresses that register multiple times (after a transfer).
    * @return keyManager The predicted key manager address.
    */
-  function predictProxyKeyManagerAddress(address _addr) external returns (address keyManager);
+  function predictProxyKeyManagerAddress(address _addr, uint96 nonce) external returns (address keyManager);
 
   /**
    * Predict the identity address for a given address.
    * @param _addr The address to look up.
+   * @param nonce A nonce to support addresses that register multiple times (after a transfer).
    * @return identity The predicted identity address.
    */
-  function predictProxyIdentityAddress(address _addr) external returns (address identity);
+  function predictProxyIdentityAddress(address _addr, uint96 nonce) external returns (address identity);
 
   /**
    * Update the owner of a key manager.
