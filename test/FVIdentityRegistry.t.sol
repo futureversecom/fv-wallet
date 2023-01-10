@@ -357,6 +357,14 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
     fvIdentityRegistry.updateKeyManagerOwner(address(this), gameAddr);
   }
 
+  function testChangeKeyManagerOwnerFailsAlreadyRegistered() public {
+    FVKeyManager userKeyManager = FVKeyManager(fvIdentityRegistry.register(address(this), 0));
+    fvIdentityRegistry.register(admin, 0);
+
+    vm.expectRevert(abi.encodeWithSelector(IdentityAlreadyExists.selector, admin));
+    userKeyManager.setOwner(admin);
+  }
+
   //
   // Test CALL permissions
   //

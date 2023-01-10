@@ -136,14 +136,14 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-                          address(fvKeyManagerBeacon),
-                          abi.encodeWithSignature(
-                            "initialize(address,address,address)",
-                            address(userFVIdentityProxy),
-                            _addr,
-                            address(this)
-                          )
-                        )
+                                address(fvKeyManagerBeacon),
+                                abi.encodeWithSignature(
+                                  "initialize(address,address,address)",
+                                  address(userFVIdentityProxy),
+                                  _addr,
+                                  address(this)
+                                )
+                              )
     );
 
     FVIdentity(payable(address(userFVIdentityProxy))).initialize(
@@ -192,10 +192,14 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    * @param owner The current owner.
    * @param newOwner The new owner.
    * @notice This function is called by the key manager.
+   * @notice newOwner must not already have a key manager.
    */
   function updateKeyManagerOwner(address owner, address newOwner) external {
     if (managers[owner] != msg.sender) {
       revert InvalidCaller(msg.sender, managers[owner]);
+    }
+    if (managers[newOwner] != address(0)) {
+      revert IdentityAlreadyExists(newOwner);
     }
     delete managers[owner];
     managers[newOwner] = msg.sender;
