@@ -207,7 +207,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
     return results;
   }
 
-  function _execute(uint256 msgValue, bytes calldata payload) internal returns (bytes memory) {
+  function _execute(uint256 msgValue, bytes calldata payload) internal virtual returns (bytes memory) {
     _nonReentrantBefore(msg.sender);
     _verifyPermissions(msg.sender, payload);
     bytes memory result = _executePayload(msgValue, payload);
@@ -217,6 +217,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
 
   function _executeRelayCall(bytes memory signature, uint256 nonce, uint256 msgValue, bytes calldata payload)
     internal
+    virtual
     returns (bytes memory)
   {
     bytes memory encodedMessage = abi.encodePacked(LSP6_VERSION, block.chainid, nonce, msgValue, payload);
@@ -246,7 +247,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @param payload the abi-encoded function call to execute on the target.
    * @return bytes the result from calling the target with `payload`
    */
-  function _executePayload(uint256 msgValue, bytes calldata payload) internal returns (bytes memory) {
+  function _executePayload(uint256 msgValue, bytes calldata payload) internal virtual returns (bytes memory) {
     emit Executed(bytes4(payload), msgValue);
 
     (bool success, bytes memory returnData) = _target.call{value: msgValue, gas: gasleft()}(payload);
@@ -324,6 +325,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   )
     internal
     view
+    virtual
   {
     bytes32 requiredPermission = _getPermissionRequiredToSetDataKey(inputDataKey, inputDataValue);
 
@@ -360,6 +362,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   )
     internal
     view
+    virtual
   {
     bool isSettingERC725YKeys;
     bool[] memory validatedInputDataKeys = new bool[](inputDataKeys.length);
@@ -408,6 +411,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   function _getPermissionRequiredToSetDataKey(bytes32 inputDataKey, bytes memory inputDataValue)
     internal
     view
+    virtual
     returns (bytes32)
   {
     // AddressPermissions[] or AddressPermissions[index]
@@ -470,6 +474,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   function _getPermissionToSetPermissionsArray(bytes32 inputDataKey, bytes memory inputDataValue)
     internal
     view
+    virtual
     returns (bytes32)
   {
     bytes memory currentValue = ERC725Y(_target).getData(inputDataKey);
@@ -496,7 +501,12 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @param inputPermissionDataKey `AddressPermissions:Permissions:<controller-address>`.
    * @return either ADD or CHANGE PERMISSIONS.
    */
-  function _getPermissionToSetControllerPermissions(bytes32 inputPermissionDataKey) internal view returns (bytes32) {
+  function _getPermissionToSetControllerPermissions(bytes32 inputPermissionDataKey)
+    internal
+    view
+    virtual
+    returns (bytes32)
+  {
     return
       // if there is nothing stored under the data key, we are trying to ADD a new controller.
       // if there are already some permissions set under the data key, we are trying to CHANGE the permissions of a controller.
@@ -514,6 +524,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   function _getPermissionToSetAllowedCallsOrERC725YKeys(bytes32 dataKey, bytes memory dataValue)
     internal
     view
+    virtual
     returns (bytes32)
   {
     uint256 dataValueLength = uint256(bytes32(dataValue));
@@ -539,7 +550,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * or a data key for a specific `LSP1UniversalReceiverDelegate:<typeId>`, starting with `_LSP1_UNIVERSAL_RECEIVER_DELEGATE_PREFIX`.
    * @return either ADD or CHANGE UNIVERSALRECEIVERDELEGATE.
    */
-  function _getPermissionToSetLSP1Delegate(bytes32 lsp1DelegateDataKey) internal view returns (bytes32) {
+  function _getPermissionToSetLSP1Delegate(bytes32 lsp1DelegateDataKey) internal view virtual returns (bytes32) {
     return
       ERC725Y(_target).getData(lsp1DelegateDataKey).length == 0
       ? _PERMISSION_ADDUNIVERSALRECEIVERDELEGATE
@@ -551,7 +562,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * of an LSP0 Extension stored under a specific LSP17Extension data key
    * @param lsp17ExtensionDataKey the dataKey to set with `_LSP17_EXTENSION_PREFIX` as prefix.
    */
-  function _getPermissionToSetLSP17Extension(bytes32 lsp17ExtensionDataKey) internal view returns (bytes32) {
+  function _getPermissionToSetLSP17Extension(bytes32 lsp17ExtensionDataKey) internal view virtual returns (bytes32) {
     return
       ERC725Y(_target).getData(lsp17ExtensionDataKey).length == 0
       ? _PERMISSION_ADDEXTENSIONS
@@ -571,6 +582,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   )
     internal
     pure
+    virtual
   {
     if (allowedERC725YDataKeysCompacted.length == 0) {
       revert NoERC725YDataKeysAllowed(controllerAddress);
@@ -677,6 +689,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   )
     internal
     pure
+    virtual
   {
     if (allowedERC725YDataKeysCompacted.length == 0) {
       revert NoERC725YDataKeysAllowed(controllerAddress);
@@ -803,7 +816,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @param permissions the permissions of the caller
    * @param payload the ABI encoded payload `target.execute(...)`
    */
-  function _verifyCanExecute(address from, bytes32 permissions, bytes calldata payload) internal view {
+  function _verifyCanExecute(address from, bytes32 permissions, bytes calldata payload) internal view virtual {
     // MUST be one of the ERC725X operation types.
     uint256 operationType = uint256(bytes32(payload[4:36]));
 
@@ -855,7 +868,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
     _verifyAllowedCall(from, payload);
   }
 
-  function _verifyAllowedCall(address from, bytes calldata payload) internal view {
+  function _verifyAllowedCall(address from, bytes calldata payload) internal view virtual {
     // CHECK for ALLOWED CALLS
     address to = address(bytes20(payload[48:68]));
 
@@ -905,7 +918,12 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @param operationType 0 = CALL, 1 = CREATE, 2 = CREATE2, etc... See ERC725X docs for more infos.
    * @return permissionsRequired (bytes32) the permission associated with the `_operationType`
    */
-  function _extractPermissionFromOperation(uint256 operationType) internal pure returns (bytes32 permissionsRequired) {
+  function _extractPermissionFromOperation(uint256 operationType)
+    internal
+    pure
+    virtual
+    returns (bytes32 permissionsRequired)
+  {
     if (operationType == OPERATION_0_CALL) {
       return _PERMISSION_CALL;
     } else if (operationType == OPERATION_1_CREATE) {
@@ -922,7 +940,12 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   /**
    * @dev returns the `superPermission` needed for a specific `operationType` of the `execute(..)`
    */
-  function _extractSuperPermissionFromOperation(uint256 operationType) internal pure returns (bytes32 superPermission) {
+  function _extractSuperPermissionFromOperation(uint256 operationType)
+    internal
+    pure
+    virtual
+    returns (bytes32 superPermission)
+  {
     if (operationType == OPERATION_0_CALL) {
       return _PERMISSION_SUPER_CALL;
     } else if (operationType == OPERATION_3_STATICCALL) {
@@ -938,7 +961,11 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @param addressPermissions the caller's permissions BitArray
    * @param permissionRequired the required permission
    */
-  function _requirePermissions(address from, bytes32 addressPermissions, bytes32 permissionRequired) internal pure {
+  function _requirePermissions(address from, bytes32 addressPermissions, bytes32 permissionRequired)
+    internal
+    pure
+    virtual
+  {
     if (!addressPermissions.hasPermission(permissionRequired)) {
       string memory permissionErrorString = _getPermissionName(permissionRequired);
       revert NotAuthorised(from, permissionErrorString);
@@ -948,7 +975,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   /**
    * @dev returns the name of the permission as a string
    */
-  function _getPermissionName(bytes32 permission) internal pure returns (string memory errorMessage) {
+  function _getPermissionName(bytes32 permission) internal pure virtual returns (string memory errorMessage) {
     if (permission == _PERMISSION_CHANGEOWNER) {
       return "TRANSFEROWNERSHIP";
     }
@@ -999,7 +1026,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   /**
    * @dev Initialise _reentrancyStatus to _NOT_ENTERED.
    */
-  function _setupLSP6ReentrancyGuard() internal {
+  function _setupLSP6ReentrancyGuard() internal virtual {
     _reentrancyStatus = false;
   }
 
@@ -1008,7 +1035,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * the status is `_ENTERED` in order to revert the call unless the caller has the REENTRANCY permission
    * Used in the beginning of the `nonReentrant` modifier, before the method execution starts.
    */
-  function _nonReentrantBefore(address from) private {
+  function _nonReentrantBefore(address from) internal virtual {
     if (_reentrancyStatus) {
       // CHECK the caller has REENTRANCY permission
       _requirePermissions(from, ERC725Y(_target).getPermissionsFor(from), _PERMISSION_REENTRANCY);
@@ -1021,7 +1048,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @dev Resets the status to `_NOT_ENTERED`
    * Used in the end of the `nonReentrant` modifier after the method execution is terminated
    */
-  function _nonReentrantAfter() private {
+  function _nonReentrantAfter() internal virtual {
     // By storing the original value once again, a refund is triggered (see
     // https://eips.ethereum.org/EIPS/eip-2200)
     _reentrancyStatus = false;
