@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-interface IFVAccountRegistry {
+interface IFVIdentityRegistry {
   /**
    * @notice Emitted when registering a new address.
-   * @param account The address of the account registered.
-   * @param wallet The address of the wallet (key manager) registered for the account.
+   * @param identity The address of the identity registered.
+   * @param wallet The address of the wallet (key manager) registered for the identity.
    */
-  event AccountRegistered(address indexed account, address indexed wallet);
+  event IdentityRegistered(address indexed identity, address indexed wallet);
 
   /**
    * Get the key manager for a given address.
@@ -17,11 +17,11 @@ interface IFVAccountRegistry {
   function keyManagerOf(address _addr) external view returns (address keyManager);
 
   /**
-   * Get the account for a given address.
+   * Get the identity for a given address.
    * @param _addr The address to look up.
-   * @return account The account.
+   * @return identity The identity.
    */
-  function accountOf(address _addr) external view returns (address account);
+  function identityOf(address _addr) external view returns (address identity);
 
   /**
    * Get the key manager implementation.
@@ -30,14 +30,14 @@ interface IFVAccountRegistry {
   function fvKeyManagerAddr() external view returns (address keyManager);
 
   /**
-   * Get the account implementation.
-   * @return account The account implementation.
+   * Get the identity implementation.
+   * @return identity The identity implementation.
    */
-  function fvAccountAddr() external view returns (address account);
+  function fvIdentityAddr() external view returns (address identity);
 
   /**
-   * Register a key manager and account for a given address.
-   * @param _addr The address to create a key manager and account for.
+   * Register a key manager and identity for a given address.
+   * @param _addr The address to create a key manager and identity for.
    * @return keyManager The registered key manager for the user.
    */
   function register(address _addr) external returns (address keyManager);
@@ -50,9 +50,9 @@ interface IFVAccountRegistry {
   function predictProxyKeyManagerAddress(address _addr) external returns (address keyManager);
 
   /**
-   * Predict the account address for a given address.
+   * Predict the identity address for a given address.
    * @param _addr The address to look up.
-   * @return account The predicted account address.
+   * @return identity The predicted identity address.
    */
-  function predictProxyAccountAddress(address _addr) external returns (address account);
+  function predictProxyIdentityAddress(address _addr) external returns (address identity);
 }

@@ -8,17 +8,17 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-import {IFVAccountRegistry} from "./IFVAccountRegistry.sol";
-import {LSP0ERC725AccountLateInit} from "./LSP0ERC725AccountLateInit.sol";
+import {IFVIdentityRegistry} from "./IFVIdentityRegistry.sol";
+import {FVIdentity} from "./FVIdentity.sol";
 import "./Utils.sol";
 
 /**
- * FV Account Registry
- * A manager for user accounts in the Futureverse ecosystem.
+ * FV Identity Registry
+ * A manager for user identities in the Futureverse ecosystem.
  */
-contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAccountRegistry {
+contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIdentityRegistry {
 
-  UpgradeableBeacon public fvAccountBeacon;
+  UpgradeableBeacon public fvIdentityBeacon;
   UpgradeableBeacon public fvKeyManagerBeacon;
   mapping(address => address) internal managers;
 
@@ -27,10 +27,10 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   }
 
   /**
-   * Initialize the Account Registry contract.
+   * Initialize the Identity Registry contract.
    * @param fvKeyManager The key manager implementation to use.
    * @dev This can only be called once on creation.
-   * @dev Deploys the account implementation so this contract is the owner.
+   * @dev Deploys the identity implementation so this contract is the owner.
    * @dev Deploys beacons for these implementations.
    */
   function initialize(address fvKeyManager) external virtual initializer {
@@ -38,10 +38,10 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     __Ownable_init();
 
     // Deploy initializable ERC725Account (LSP0) and LSP6KeyManager contracts
-    LSP0ERC725AccountLateInit fvAccount = new LSP0ERC725AccountLateInit();
+    FVIdentity fvIdentity = new FVIdentity();
 
     // Deploy beacons for the contracts (which user wallet proxies will point to)
-    fvAccountBeacon = new UpgradeableBeacon(address(fvAccount));
+    fvIdentityBeacon = new UpgradeableBeacon(address(fvIdentity));
     fvKeyManagerBeacon = new UpgradeableBeacon(fvKeyManager);
   }
 
@@ -57,17 +57,17 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   function keyManagerOf(address _addr) public view returns (address keyManager) {
     keyManager = managers[_addr];
     if (keyManager == address(0)) {
-      revert AccountNotRegistered(_addr);
+      revert IdentityNotRegistered(_addr);
     }
     return keyManager;
   }
 
   /**
-   * Get the account for a given address.
+   * Get the identity for a given address.
    * @param _addr The address to look up.
-   * @return account The account.
+   * @return identity The identity.
    */
-  function accountOf(address _addr) external view returns (address account) {
+  function identityOf(address _addr) external view returns (address identity) {
     address keyManager = keyManagerOf(_addr);
     return ILSP6KeyManager(keyManager).target();
   }
@@ -81,11 +81,11 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   }
 
   /**
-   * Get the account implementation.
-   * @return account The account implementation.
+   * Get the identity implementation.
+   * @return identity The identity implementation.
    */
-  function fvAccountAddr() external view returns (address account) {
-    return fvAccountBeacon.implementation();
+  function fvIdentityAddr() external view returns (address identity) {
+    return fvIdentityBeacon.implementation();
   }
 
   //
@@ -102,12 +102,12 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   }
 
   /**
-   * Upgrade the account implementation.
+   * Upgrade the identity implementation.
    * @param _newImplementation The new implementation address.
    * @dev This can only be called by the contract owner.
    */
-  function upgradeFVAccount(address _newImplementation) external onlyOwner {
-    fvAccountBeacon.upgradeTo(_newImplementation);
+  function upgradeFVIdentity(address _newImplementation) external onlyOwner {
+    fvIdentityBeacon.upgradeTo(_newImplementation);
   }
 
   //
@@ -115,20 +115,20 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   //
 
   /**
-   * Register a key manager and account for a given address.
-   * @param _addr The address to create a key manager and account for.
+   * Register a key manager and identity for a given address.
+   * @param _addr The address to create a key manager and identity for.
    * @return keyManager The registered key manager for the user.
    */
   function register(address _addr) public returns (address keyManager) {
     if (managers[_addr] != address(0)) {
-      revert AccountAlreadyExists(_addr);
+      revert IdentityAlreadyExists(_addr);
     }
 
     bytes32 salt = keccak256(abi.encodePacked(_addr));
 
     // deploy ERC725Account proxy - using Create2
-    BeaconProxy userFVAccountProxy = new BeaconProxy{salt: salt}(
-            address(fvAccountBeacon),
+    BeaconProxy userFVIdentityProxy = new BeaconProxy{salt: salt}(
+            address(fvIdentityBeacon),
             bytes("") // dont `initialize` (done below)
         );
 
@@ -138,18 +138,18 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
                                           address(fvKeyManagerBeacon),
                                           abi.encodeWithSignature(
                                               "initialize(address)",
-                                              address(userFVAccountProxy)
+                                              address(userFVIdentityProxy)
                                           )
                                       )
     );
 
-    LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
+    FVIdentity(payable(address(userFVIdentityProxy))).initialize(
       keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, _addr), Utils.toBytes(ALL_PERMISSIONS)
     );
 
     managers[_addr] = keyManager;
 
-    emit AccountRegistered(_addr, keyManager);
+    emit IdentityRegistered(_addr, keyManager);
 
     return keyManager;
   }
@@ -160,7 +160,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
    * @return keyManager The predicted key manager address.
    */
   function predictProxyKeyManagerAddress(address _addr) public view returns (address keyManager) {
-    address proxyWalletAddress = predictProxyAccountAddress(_addr);
+    address proxyWalletAddress = predictProxyIdentityAddress(_addr);
     bytes memory bytecodeWithConstructor = abi.encodePacked(
       type(BeaconProxy).creationCode,
       abi.encode(fvKeyManagerBeacon, abi.encodeWithSignature("initialize(address)", address(proxyWalletAddress)))
@@ -169,13 +169,13 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
   }
 
   /**
-   * Predict the account address for a given address.
+   * Predict the identity address for a given address.
    * @param _addr The address to look up.
-   * @return account The predicted account address.
+   * @return identity The predicted identity address.
    */
-  function predictProxyAccountAddress(address _addr) public view returns (address account) {
+  function predictProxyIdentityAddress(address _addr) public view returns (address identity) {
     bytes memory bytecodeWithConstructor =
-      abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvAccountBeacon, bytes("")));
+      abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvIdentityBeacon, bytes("")));
     return predictAddress(_addr, bytecodeWithConstructor);
   }
 
@@ -187,7 +187,7 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
    * @dev See {IERC165-supportsInterface}.
    */
   function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-    return interfaceId == type(IFVAccountRegistry).interfaceId || super.supportsInterface(interfaceId);
+    return interfaceId == type(IFVIdentityRegistry).interfaceId || super.supportsInterface(interfaceId);
   }
 
   /**

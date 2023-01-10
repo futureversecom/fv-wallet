@@ -18,20 +18,20 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {IFVAccountRegistry} from "../src/IFVAccountRegistry.sol";
-import {FVAccountRegistry} from "../src/FVAccountRegistry.sol";
+import {IFVIdentityRegistry} from "../src/IFVIdentityRegistry.sol";
+import {FVIdentityRegistry} from "../src/FVIdentityRegistry.sol";
 import "../src/Utils.sol";
 
 import "./helpers/GasHelper.t.sol";
 import "./helpers/DataHelper.t.sol";
 import "./helpers/MockContracts.t.sol";
 
-contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
+contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
   address private constant gameAddr = address(0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045);
 
-  IFVAccountRegistry public fvAccountRegistry;
-  IFVAccountRegistry private registryImpl;
+  IFVIdentityRegistry public fvIdentityRegistry;
+  IFVIdentityRegistry private registryImpl;
   LSP6KeyManagerInit private keyManagerImpl;
   MockERC20 public mockERC20;
 
@@ -40,7 +40,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   address private pkAddr;
 
   // re-declare event for assertions
-  event AccountRegistered(address indexed account, address indexed wallet);
+  event IdentityRegistered(address indexed identity, address indexed wallet);
   event ContractCreated(
     uint256 indexed operationType, address indexed contractAddress, uint256 indexed value, bytes32 salt
   );
@@ -55,12 +55,12 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     mockERC20 = new MockERC20();
 
     // deploy upgradable contract
-    registryImpl = new FVAccountRegistry();
+    registryImpl = new FVIdentityRegistry();
 
     // deploy key manager implementation
     keyManagerImpl = new LSP6KeyManagerInit();
 
-    // deploy proxy with dead address as proxy admin, initialize upgradable account registry
+    // deploy proxy with dead address as proxy admin, initialize upgradable identity registry
     TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
       address(registryImpl),
       admin,
@@ -68,29 +68,29 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     );
 
     // note: admin can call additional functions on proxy
-    fvAccountRegistry = FVAccountRegistry(address(proxy)); // set proxy as fvAccountRegistry
+    fvIdentityRegistry = FVIdentityRegistry(address(proxy)); // set proxy as fvIdentityRegistry
   }
 
   //
   // Interfaces
   //
-  function testAccountRegistryInterfaces() public {
-    IERC165 registry = IERC165(address(fvAccountRegistry));
+  function testIdentityRegistryInterfaces() public {
+    IERC165 registry = IERC165(address(fvIdentityRegistry));
 
     assertTrue(registry.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
-    assertTrue(registry.supportsInterface(type(IFVAccountRegistry).interfaceId), "FVAccountRegistry support");
+    assertTrue(registry.supportsInterface(type(IFVIdentityRegistry).interfaceId), "FVIdentityRegistry support");
   }
 
   function testKeyManagerInterfaces() public {
-    IERC165 userKeyManager = IERC165(fvAccountRegistry.register(address(0)));
+    IERC165 userKeyManager = IERC165(fvIdentityRegistry.register(address(0)));
 
     assertTrue(userKeyManager.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
     assertTrue(userKeyManager.supportsInterface(type(IERC1271).interfaceId), "ERC1271 support");
     assertTrue(userKeyManager.supportsInterface(type(ILSP6KeyManager).interfaceId), "LSP6 support");
   }
 
-  function testAccountInterfaces() public {
-    address userKeyManager = fvAccountRegistry.register(address(0));
+  function testIdentityInterfaces() public {
+    address userKeyManager = fvIdentityRegistry.register(address(0));
     IERC165 userFVWalletProxy = IERC165(ILSP6KeyManager(userKeyManager).target());
 
     assertTrue(userFVWalletProxy.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
@@ -103,36 +103,36 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Initialising
   //
-  function testFVAccountImplCannotBeInitializedTwice() public {
-    LSP0ERC725AccountLateInit fvAccount = LSP0ERC725AccountLateInit(payable(fvAccountRegistry.fvAccountAddr()));
+  function testFVIdentityImplCannotBeInitializedTwice() public {
+    FVIdentity fvIdentity = FVIdentity(payable(fvIdentityRegistry.fvIdentityAddr()));
 
     vm.expectRevert("Initializable: contract is already initialized");
 
-    fvAccount.initialize(address(this), bytes32(""), bytes(""));
+    fvIdentity.initialize(address(this), bytes32(""), bytes(""));
   }
 
   function testFVKeyManagerImplCannotBeInitializedTwice() public {
-    LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvAccountRegistry.fvKeyManagerAddr()));
+    LSP6KeyManagerInit fvKeyManager = LSP6KeyManagerInit(payable(fvIdentityRegistry.fvKeyManagerAddr()));
 
     vm.expectRevert("Initializable: contract is already initialized");
 
     fvKeyManager.initialize(address(this));
   }
 
-  function testFVAccountOwnerIsZeroAddress() public {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    assertEq(fvAccount.owner(), address(0));
+  function testFVIdentityOwnerIsZeroAddress() public {
+    LSP0ERC725Account fvIdentity = LSP0ERC725Account(payable(fvIdentityRegistry.fvIdentityAddr()));
+    assertEq(fvIdentity.owner(), address(0));
   }
 
-  function testFVAccountRegistryIsNotFVAccountOwner() public {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
-    assertFalse(fvAccount.owner() == address(fvAccountRegistry));
+  function testFVIdentityRegistryIsNotFVIdentityOwner() public {
+    LSP0ERC725Account fvIdentity = LSP0ERC725Account(payable(fvIdentityRegistry.fvIdentityAddr()));
+    assertFalse(fvIdentity.owner() == address(fvIdentityRegistry));
   }
 
-  function testFVAccountRegistryHasNoPermissions() public {
-    LSP0ERC725Account fvAccount = LSP0ERC725Account(payable(fvAccountRegistry.fvAccountAddr()));
+  function testFVIdentityRegistryHasNoPermissions() public {
+    LSP0ERC725Account fvIdentity = LSP0ERC725Account(payable(fvIdentityRegistry.fvIdentityAddr()));
     bytes memory registryPermissions =
-      fvAccount.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, address(fvAccountRegistry)));
+      fvIdentity.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, address(fvIdentityRegistry)));
     assertEq(registryPermissions, bytes(""));
   }
 
@@ -141,74 +141,74 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   function testUnregistedErrors() public {
     address zero = address(0);
-    vm.expectRevert(abi.encodeWithSelector(AccountNotRegistered.selector, zero));
-    IFVAccountRegistry(address(fvAccountRegistry)).accountOf(zero);
-    vm.expectRevert(abi.encodeWithSelector(AccountNotRegistered.selector, zero));
-    IFVAccountRegistry(address(fvAccountRegistry)).keyManagerOf(zero);
+    vm.expectRevert(abi.encodeWithSelector(IdentityNotRegistered.selector, zero));
+    IFVIdentityRegistry(address(fvIdentityRegistry)).identityOf(zero);
+    vm.expectRevert(abi.encodeWithSelector(IdentityNotRegistered.selector, zero));
+    IFVIdentityRegistry(address(fvIdentityRegistry)).keyManagerOf(zero);
   }
 
   function testRegisterOfZeroAddress() public {
-    vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
+    vm.expectEmit(true, true, false, false, address(fvIdentityRegistry)); // ignore 2nd param of event (not deterministic)
 
-    address proxyKeyManager = IFVAccountRegistry(address(fvAccountRegistry)).predictProxyKeyManagerAddress(address(0));
+    address proxyKeyManager = IFVIdentityRegistry(address(fvIdentityRegistry)).predictProxyKeyManagerAddress(address(0));
 
     // We emit the event we expect to see.
-    emit AccountRegistered(address(0), proxyKeyManager);
+    emit IdentityRegistered(address(0), proxyKeyManager);
 
     // Perform the actual call (which should emit expected event).
-    fvAccountRegistry.register(address(0));
+    fvIdentityRegistry.register(address(0));
   }
 
   function testRegisterOfNewAddressSucceeds() public {
-    vm.expectEmit(true, true, false, false, address(fvAccountRegistry)); // ignore 2nd param of event (not deterministic)
+    vm.expectEmit(true, true, false, false, address(fvIdentityRegistry)); // ignore 2nd param of event (not deterministic)
 
     address proxyKeyManager =
-      IFVAccountRegistry(address(fvAccountRegistry)).predictProxyKeyManagerAddress(address(this));
+      IFVIdentityRegistry(address(fvIdentityRegistry)).predictProxyKeyManagerAddress(address(this));
 
-    emit AccountRegistered(address(this), proxyKeyManager);
+    emit IdentityRegistered(address(this), proxyKeyManager);
 
-    startMeasuringGas("fvAccountRegistry.register(address(this)) success");
-    address userKeyManagerAddr = fvAccountRegistry.register(address(this));
+    startMeasuringGas("fvIdentityRegistry.register(address(this)) success");
+    address userKeyManagerAddr = fvIdentityRegistry.register(address(this));
     stopMeasuringGas();
     assertTrue(userKeyManagerAddr != address(0));
 
-    assertEq(fvAccountRegistry.keyManagerOf(address(this)), userKeyManagerAddr);
+    assertEq(fvIdentityRegistry.keyManagerOf(address(this)), userKeyManagerAddr);
   }
 
   function testRegisterFailsForMultipleRegistrations() public {
-    fvAccountRegistry.register(address(this));
-    vm.expectRevert(abi.encodeWithSelector(AccountAlreadyExists.selector, address(this)));
-    startMeasuringGas("fvAccountRegistry.register(address(this)) fail second acc");
-    fvAccountRegistry.register(address(this));
+    fvIdentityRegistry.register(address(this));
+    vm.expectRevert(abi.encodeWithSelector(IdentityAlreadyExists.selector, address(this)));
+    startMeasuringGas("fvIdentityRegistry.register(address(this)) fail second acc");
+    fvIdentityRegistry.register(address(this));
     stopMeasuringGas();
   }
 
   function testRegisteredUserCanCallExternalContract() public {
-    address userKeyManagerAddr = fvAccountRegistry.register(address(this));
+    address userKeyManagerAddr = fvIdentityRegistry.register(address(this));
 
     // abi encoded call to execute mint call
     bytes memory executeCall = createERC20ExecuteDataForCall(mockERC20);
     ILSP6KeyManager(userKeyManagerAddr).execute(executeCall);
 
-    // Caller of mint should be account of registered address
-    address registeredAccount = fvAccountRegistry.accountOf(address(this));
-    assertEq(ILSP6KeyManager(userKeyManagerAddr).target(), registeredAccount);
-    assertEq(mockERC20.balanceOf(registeredAccount), 100);
+    // Caller of mint should be identity of registered address
+    address registeredIdentity = fvIdentityRegistry.identityOf(address(this));
+    assertEq(ILSP6KeyManager(userKeyManagerAddr).target(), registeredIdentity);
+    assertEq(mockERC20.balanceOf(registeredIdentity), 100);
   }
 
   //
   // Test CALL permissions
   //
-  function testCallUnauthedExternalAccountFails() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCallUnauthedExternalIdentityFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     vm.prank(gameAddr);
     vm.expectRevert(abi.encodeWithSelector(NoPermissionsSet.selector, gameAddr));
     userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
-  function testCallAuthedExternalAccountWrongContractFails() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCallAuthedExternalIdentityWrongContractFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
@@ -238,8 +238,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(createERC20ExecuteDataForCall(mockERC20));
   }
 
-  function testCallAuthedExternalAccountSingleContract() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCallAuthedExternalIdentitySingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     // Give call permission
     bytes memory execData = abi.encodeWithSelector(
@@ -266,8 +266,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertEq(mockERC20.balanceOf(userKeyManager.target()), 100);
   }
 
-  function testCallAuthedExternalAccountMultipleContract() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCallAuthedExternalIdentityMultipleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
     MockERC20 mockERC20B = new MockERC20();
 
     // Give call permission
@@ -302,8 +302,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test CREATE permissions
   //
-  function testCreateUnauthedExternalAccountFails() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCreateUnauthedExternalIdentityFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     vm.prank(userAddr);
@@ -312,8 +312,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(createMockERC20ExecuteData());
   }
 
-  function testCreateAuthedExternalAccountSingleContract() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCreateAuthedExternalIdentitySingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -347,8 +347,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test CREATE2 permissions
   //
-  function testCreate2UnauthedExternalAccountFails() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCreate2UnauthedExternalIdentityFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     vm.prank(userAddr);
@@ -357,8 +357,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     userKeyManager.execute(create2MockERC20ExecuteData());
   }
 
-  function testCreate2AuthedExternalAccountSingleContract() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testCreate2AuthedExternalIdentitySingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -392,8 +392,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test STATICCALL permissions
   //
-  function testStaticCallUnauthedExternalAccountFails() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testStaticCallUnauthedExternalIdentityFails() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     vm.prank(userAddr);
@@ -410,8 +410,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     );
   }
 
-  function testStaticCallAuthedExternalAccountSingleContract() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+  function testStaticCallAuthedExternalIdentitySingleContract() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -456,10 +456,10 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   // Test DELEGATECALL permissions
   //
-  function testDelegateCallUnauthedExternalAccountFails() public {
+  function testDelegateCallUnauthedExternalIdentityFails() public {
     DelegateAttacker delegated = new DelegateAttacker();
 
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     vm.prank(userAddr);
@@ -478,7 +478,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
   function testDelegateCallFailsOnKeyManager() public {
     DelegateAttacker delegated = new DelegateAttacker();
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
 
@@ -520,7 +520,7 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   // Test CALL permissions using relay
   //
   function testCallRelay() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(pkAddr));
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(pkAddr));
 
     bytes memory payload = createERC20ExecuteDataForCall(mockERC20);
     bytes memory signature = signForRelayCall(payload, 0, 0, pk, vm, address(userKeyManager));
@@ -532,14 +532,14 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertEq(mockERC20.balanceOf(userKeyManager.target()), 100);
   }
 
-  function testFVAccountRegistryCannotBeInitializedTwice() public {
-    address proxyAddress = address(fvAccountRegistry);
+  function testFVIdentityRegistryCannotBeInitializedTwice() public {
+    address proxyAddress = address(fvIdentityRegistry);
 
     // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/bc50d373e37a6250f931a5dba3847bc88e46797e/contracts/proxy/ERC1967/ERC1967Upgrade.sol#L28
     bytes32 implementationSlot = bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1);
     bytes32 implAddr = vm.load(proxyAddress, implementationSlot); // load impl address from storage
 
-    FVAccountRegistry registry = FVAccountRegistry(address(uint160(uint256(implAddr))));
+    FVIdentityRegistry registry = FVIdentityRegistry(address(uint160(uint256(implAddr))));
 
     vm.expectRevert("Initializable: contract is already initialized");
 
@@ -547,11 +547,11 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   }
 
   //
-  // FVAccountRegistry Transparent Proxy tests
+  // FVIdentityRegistry Transparent Proxy tests
   //
-  function testNonAdminCannotCallAdminFunctionsOnFVAccountRegistryTransparentProxy() public {
+  function testNonAdminCannotCallAdminFunctionsOnFVIdentityRegistryTransparentProxy() public {
     // ensure non-admin cannot call TransparentProxy functions
-    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
+    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvIdentityRegistry)));
 
     vm.expectRevert();
     proxy.admin();
@@ -569,8 +569,8 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     proxy.upgradeToAndCall(address(this), "");
   }
 
-  function testAdminCanCallAdminFunctionsOnFVAccountRegistryTransparentProxy() public {
-    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
+  function testAdminCanCallAdminFunctionsOnFVIdentityRegistryTransparentProxy() public {
+    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvIdentityRegistry)));
 
     vm.startPrank(admin);
 
@@ -588,18 +588,20 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     vm.expectRevert("ERC1967: new implementation is not a contract");
     proxy.upgradeTo(address(admin));
 
-    // create a copy of the account registry impl (not the proxy) - for testing upgradability
-    address fvAccountRegistryV2 = Clones.clone(address(registryImpl));
+    // create a copy of the identity registry impl (not the proxy) - for testing upgradability
+    address fvIdentityRegistryV2 = Clones.clone(address(registryImpl));
     vm.expectEmit(true, false, false, false, address(proxy));
-    emit Upgraded(fvAccountRegistryV2);
-    proxy.upgradeTo(fvAccountRegistryV2);
+    emit Upgraded(fvIdentityRegistryV2);
+    proxy.upgradeTo(fvIdentityRegistryV2);
 
-    // create a copy of the account registry impl (not the proxy) - for testing upgradability with call
-    address fvAccountRegistryV3 = Clones.clone(address(registryImpl));
+    // create a copy of the identity registry impl (not the proxy) - for testing upgradability with call
+    address fvIdentityRegistryV3 = Clones.clone(address(registryImpl));
     // re-initialize fails as already initialized (state saved in proxy), future contracts must use
     // `reinitializer(version)` modifier on `initialize` function
     vm.expectRevert("Initializable: contract is already initialized");
-    proxy.upgradeToAndCall(fvAccountRegistryV3, abi.encodeWithSignature("initialize(address)", address(keyManagerImpl)));
+    proxy.upgradeToAndCall(
+      fvIdentityRegistryV3, abi.encodeWithSignature("initialize(address)", address(keyManagerImpl))
+    );
 
     // can successfully re-initialize if upgraded contract has `reinitializer(version)` modifier on `initialize` function
     address initializableMock = address(new UpgradedMock());
@@ -609,17 +611,17 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   }
 
   function testRegistrationsRetainAfterProxyUpgrade() public {
-    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvAccountRegistry)));
+    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(fvIdentityRegistry)));
 
     // register address
-    address expected = fvAccountRegistry.register(address(this));
+    address expected = fvIdentityRegistry.register(address(this));
 
     // upgrade
-    address fvAccountRegistryV2 = Clones.clone(address(registryImpl));
+    address fvIdentityRegistryV2 = Clones.clone(address(registryImpl));
     vm.prank(admin);
-    proxy.upgradeTo(fvAccountRegistryV2);
+    proxy.upgradeTo(fvIdentityRegistryV2);
 
-    assertEq(expected, FVAccountRegistry(address(proxy)).keyManagerOf(address(this)));
+    assertEq(expected, FVIdentityRegistry(address(proxy)).keyManagerOf(address(this)));
   }
 
   //
@@ -627,10 +629,10 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   //
   function testUpgradingKeyManagerImplFailsAsNonAdmin() public {
     // create a clone of the key manager
-    address keyManagerv2 = Clones.clone(fvAccountRegistry.fvKeyManagerAddr());
+    address keyManagerv2 = Clones.clone(fvIdentityRegistry.fvKeyManagerAddr());
 
     // update the impl of the beacon fails externally (not owner)
-    UpgradeableBeacon keyManagerBeacon = FVAccountRegistry(address(fvAccountRegistry)).fvKeyManagerBeacon();
+    UpgradeableBeacon keyManagerBeacon = FVIdentityRegistry(address(fvIdentityRegistry)).fvKeyManagerBeacon();
     vm.expectRevert("Ownable: caller is not the owner");
     keyManagerBeacon.upgradeTo(keyManagerv2);
 
@@ -639,21 +641,21 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
     // update the impl of the beacon fails internally (not owner)
     vm.expectRevert("Ownable: caller is not the owner");
-    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVKeyManager(keyManagerv2);
+    FVIdentityRegistry(address(fvIdentityRegistry)).upgradeFVKeyManager(keyManagerv2);
   }
 
   function testUpgradingKeyManagerImplSucceedsAsAdmin() public {
     // register a user
-    address userKeyManager = fvAccountRegistry.register(address(this));
+    address userKeyManager = fvIdentityRegistry.register(address(this));
 
     // create a clone of the key manager
-    address keyManagerv2 = Clones.clone(fvAccountRegistry.fvKeyManagerAddr());
+    address keyManagerv2 = Clones.clone(fvIdentityRegistry.fvKeyManagerAddr());
 
     // update the impl of the beacon succeeds
-    UpgradeableBeacon keyManagerBeacon = FVAccountRegistry(address(fvAccountRegistry)).fvKeyManagerBeacon();
+    UpgradeableBeacon keyManagerBeacon = FVIdentityRegistry(address(fvIdentityRegistry)).fvKeyManagerBeacon();
     vm.expectEmit(true, false, false, false, address(keyManagerBeacon));
     emit Upgraded(keyManagerv2);
-    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVKeyManager(keyManagerv2);
+    FVIdentityRegistry(address(fvIdentityRegistry)).upgradeFVKeyManager(keyManagerv2);
 
     // validate user key manager impl is updated
     bytes32 beaconSlot = bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1);
@@ -666,13 +668,13 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
 
   function testFVKeyManagerStorageUpgrading() public {
     // register a user
-    address userKeyManager = fvAccountRegistry.register(address(this));
+    address userKeyManager = fvIdentityRegistry.register(address(this));
 
     address oldTarget = LSP6KeyManagerInit(userKeyManager).target();
 
     // upgrade
     address keyManagerv2 = address(new MockKeyManagerUpgraded());
-    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVKeyManager(keyManagerv2);
+    FVIdentityRegistry(address(fvIdentityRegistry)).upgradeFVKeyManager(keyManagerv2);
 
     // test old storage
     assertEq(oldTarget, LSP6KeyManagerInit(userKeyManager).target());
@@ -683,51 +685,51 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
   }
 
   //
-  // FVAccount upgrade tests
+  // FVIdentity upgrade tests
   //
-  function testUpgradingFVAccountImplFailsAsNonAdmin() public {
-    // create a clone of the account
-    address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
+  function testUpgradingFVIdentityImplFailsAsNonAdmin() public {
+    // create a clone of the identity
+    address fvIdentityv2 = Clones.clone(fvIdentityRegistry.fvIdentityAddr());
 
     // update the impl of the beacon fails externally (not owner)
-    UpgradeableBeacon fvAccountBeacon = FVAccountRegistry(address(fvAccountRegistry)).fvAccountBeacon();
+    UpgradeableBeacon fvIdentityBeacon = FVIdentityRegistry(address(fvIdentityRegistry)).fvIdentityBeacon();
     vm.expectRevert("Ownable: caller is not the owner");
-    fvAccountBeacon.upgradeTo(fvAccountv2);
+    fvIdentityBeacon.upgradeTo(fvIdentityv2);
 
     address userAddr = 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045;
     vm.startPrank(userAddr);
 
     // update the impl of the beacon fails internally (not owner)
     vm.expectRevert("Ownable: caller is not the owner");
-    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVAccount(fvAccountv2);
+    FVIdentityRegistry(address(fvIdentityRegistry)).upgradeFVIdentity(fvIdentityv2);
   }
 
-  function testUpgradingFVAccountImplSucceedsAsAdmin() public {
-    // register a user, get the proxy address for user FV account
-    address userFVAccountProxy =
-      address(payable(LSP6KeyManagerInit(fvAccountRegistry.register(address(this))).target()));
+  function testUpgradingFVIdentityImplSucceedsAsAdmin() public {
+    // register a user, get the proxy address for user FV identity
+    address userFVIdentityProxy =
+      address(payable(LSP6KeyManagerInit(fvIdentityRegistry.register(address(this))).target()));
 
-    // create a clone of the account
-    address fvAccountv2 = Clones.clone(fvAccountRegistry.fvAccountAddr());
+    // create a clone of the identity
+    address fvIdentityv2 = Clones.clone(fvIdentityRegistry.fvIdentityAddr());
 
     // update the impl of the beacon succeeds
-    UpgradeableBeacon fvAccountBeacon = FVAccountRegistry(address(fvAccountRegistry)).fvAccountBeacon();
-    vm.expectEmit(true, false, false, false, address(fvAccountBeacon));
-    emit Upgraded(fvAccountv2);
-    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVAccount(fvAccountv2);
+    UpgradeableBeacon fvIdentityBeacon = FVIdentityRegistry(address(fvIdentityRegistry)).fvIdentityBeacon();
+    vm.expectEmit(true, false, false, false, address(fvIdentityBeacon));
+    emit Upgraded(fvIdentityv2);
+    FVIdentityRegistry(address(fvIdentityRegistry)).upgradeFVIdentity(fvIdentityv2);
 
-    // validate user account impl is updated
+    // validate user identity impl is updated
     bytes32 beaconSlot = bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1);
-    bytes32 implAddr = vm.load(userFVAccountProxy, beaconSlot); // load beacon address from storage
-    assertEq(address(uint160(uint256(implAddr))), address(fvAccountBeacon));
+    bytes32 implAddr = vm.load(userFVIdentityProxy, beaconSlot); // load beacon address from storage
+    assertEq(address(uint160(uint256(implAddr))), address(fvIdentityBeacon));
 
-    // validate that the beacon impl address is updated (also implying that the user account impl is updated)
-    assertEq(fvAccountBeacon.implementation(), fvAccountv2);
+    // validate that the beacon impl address is updated (also implying that the user identity impl is updated)
+    assertEq(fvIdentityBeacon.implementation(), fvIdentityv2);
   }
 
-  function testFVAccountStorageUpgrading() public {
+  function testFVIdentityStorageUpgrading() public {
     // register a user
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvAccountRegistry.register(address(this)));
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
 
     // give some permissions for storage test
     bytes memory oldData = Utils.toBytes(_PERMISSION_CALL);
@@ -737,14 +739,14 @@ contract FVAccountRegistryBaseTest is Test, GasHelper, DataHelper {
     assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);
 
     // upgrade
-    address fvAccountv2 = address(new MockAccountUpgraded());
-    FVAccountRegistry(address(fvAccountRegistry)).upgradeFVAccount(fvAccountv2);
+    address fvIdentityv2 = address(new MockIdentityUpgraded());
+    FVIdentityRegistry(address(fvIdentityRegistry)).upgradeFVIdentity(fvIdentityv2);
 
     // test old storage
     assertEq(IERC725Y(userKeyManager.target()).getData(dataKey), oldData);
 
     // test new storage
     userKeyManager.execute(execData);
-    assertEq(MockAccountUpgraded(payable(address(userKeyManager.target()))).setDataCounter(), 1);
+    assertEq(MockIdentityUpgraded(payable(address(userKeyManager.target()))).setDataCounter(), 1);
   }
 }

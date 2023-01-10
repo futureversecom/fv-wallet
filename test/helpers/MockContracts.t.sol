@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {LSP6KeyManagerInit} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
-import "../../src/LSP0ERC725AccountLateInit.sol";
+import "../../src/FVIdentity.sol";
 
 contract MockERC20 is ERC20 {
   constructor() ERC20("MyToken", "MTK") {}
@@ -54,7 +54,7 @@ contract MockKeyManagerUpgraded is LSP6KeyManagerInit {
 }
 
 /// @dev Key Manager with additional storage and functions
-contract MockAccountUpgraded is LSP0ERC725AccountLateInit {
+contract MockIdentityUpgraded is FVIdentity {
   uint256 public setDataCounter;
 
   function setData(bytes32 dataKey, bytes memory dataValue) public override onlyOwner {
