@@ -13,6 +13,13 @@ error IdentityAlreadyExists(address addr);
  */
 error IdentityNotRegistered(address addr);
 
+/**
+ * @dev Thrown when the caller is invalid.
+ * @param actual The actual caller.
+ * @param expected The expected caller.
+ */
+error InvalidCaller(address actual, address expected);
+
 // All Permissions currently exclude REENTRANCY, DELEGATECALL and SUPER_DELEGATECALL for security
 // source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182
 bytes32 constant ALL_PERMISSIONS = 0x00000000000000000000000000000000000000000000000000000000003f3f7f;

@@ -135,13 +135,14 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-              address(fvKeyManagerBeacon),
-              abi.encodeWithSignature(
-                "initialize(address,address)",
-                address(userFVIdentityProxy),
-                _addr
-              )
-            )
+                    address(fvKeyManagerBeacon),
+                    abi.encodeWithSignature(
+                      "initialize(address,address,address)",
+                      address(userFVIdentityProxy),
+                      _addr,
+                      address(this)
+                    )
+                  )
     );
 
     FVIdentity(payable(address(userFVIdentityProxy))).initialize(
@@ -165,7 +166,8 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
     bytes memory bytecodeWithConstructor = abi.encodePacked(
       type(BeaconProxy).creationCode,
       abi.encode(
-        fvKeyManagerBeacon, abi.encodeWithSignature("initialize(address,address)", address(proxyWalletAddress), _addr)
+        fvKeyManagerBeacon,
+        abi.encodeWithSignature("initialize(address,address,address)", address(proxyWalletAddress), _addr, address(this))
       )
     );
     return predictAddress(_addr, bytecodeWithConstructor);
@@ -180,6 +182,21 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
     bytes memory bytecodeWithConstructor =
       abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(fvIdentityBeacon, bytes("")));
     return predictAddress(_addr, bytecodeWithConstructor);
+  }
+
+  /**
+   * Update the owner of a key manager.
+   * @param owner The current owner.
+   * @param newOwner The new owner.
+   * @notice This function is called by the key manager.
+   */
+  function updateKeyManagerOwner(address owner, address newOwner) external {
+    if (managers[owner] != msg.sender) {
+      revert InvalidCaller(msg.sender, managers[owner]);
+    }
+    delete managers[owner];
+    managers[newOwner] = msg.sender;
+    emit IdentityChanged(owner, newOwner, msg.sender);
   }
 
   //

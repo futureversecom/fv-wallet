@@ -12,14 +12,18 @@ import {
 } from "@erc725/smart-contracts/contracts/constants.sol";
 import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
 
+import "./IFVIdentityRegistry.sol";
 import "./custom/LSP6KeyManagerInitVirtual.sol";
 import "./custom/OwnableSilent.sol";
 
 /**
  * @title Proxy implementation of a contract acting as a controller of an ERC725 Account, using permissions stored in the ERC725Y storage
  * @notice This implementation includes an owner which is the only account able to manage permissions and ownership.
+ * @dev Ownership changes flow back to the FVRegistry.
  */
 contract FVKeyManager is LSP6KeyManagerInitVirtual, OwnableSilent {
+  IFVIdentityRegistry internal fvIdentityRegistry;
+
   constructor() {
     _disableInitializers();
   }
@@ -27,11 +31,23 @@ contract FVKeyManager is LSP6KeyManagerInitVirtual, OwnableSilent {
   /**
    * @notice Initiate the account with the address of the ERC725Account contract and sets LSP6KeyManager InterfaceId
    * @param target_ The address of the ER725Account to control
-   * @param owner_ The owner address of the the Key Manager
+   * @param owner_ The owner address of the Key Manager
+   * @param fvIdentityRegistry_ The address of the FV Identity Registry
    */
-  function initialize(address target_, address owner_) external initializer {
+  function initialize(address target_, address owner_, address fvIdentityRegistry_) external initializer {
     LSP6KeyManagerInitVirtual._initialize(target_);
     OwnableSilent._setOwner(owner_);
+    fvIdentityRegistry = IFVIdentityRegistry(fvIdentityRegistry_);
+  }
+
+  /**
+   * Update the owner of the key manager.
+   * @param newOwner The new owner address.
+   * @notice This can only be called by the current owner.
+   */
+  function setOwner(address newOwner) external onlyOwner {
+    fvIdentityRegistry.updateKeyManagerOwner(owner(), newOwner);
+    _setOwner(newOwner);
   }
 
   /**

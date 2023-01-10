@@ -40,7 +40,8 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
   address private pkAddr;
 
   // re-declare event for assertions
-  event IdentityRegistered(address indexed wallet, address indexed keyManager, address indexed identity);
+  event IdentityRegistered(address indexed owner, address indexed keyManager, address indexed identity);
+  event IdentityChanged(address indexed oldOwner, address indexed newOwner, address indexed keyManager);
   event ContractCreated(
     uint256 indexed operationType, address indexed contractAddress, uint256 indexed value, bytes32 salt
   );
@@ -270,6 +271,41 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
     // transferOwnership
     execData = abi.encodeWithSelector(bytes4(keccak256("transferOwnership(address)")), admin);
     userKeyManager.execute(execData);
+  }
+
+  //
+  // Test change key manager owner
+  //
+  function testChangeKeyManagerOwner() public {
+    FVKeyManager userKeyManager = FVKeyManager(fvIdentityRegistry.register(address(this)));
+
+    vm.expectEmit(true, false, true, true, address(fvIdentityRegistry));
+    emit IdentityChanged(address(this), admin, address(userKeyManager));
+    userKeyManager.setOwner(admin);
+
+    assertEq(userKeyManager.owner(), admin);
+    assertEq(fvIdentityRegistry.keyManagerOf(admin), address(userKeyManager));
+    vm.expectRevert(abi.encodeWithSelector(IdentityNotRegistered.selector, address(this)));
+    assertEq(fvIdentityRegistry.keyManagerOf(address(this)), address(0));
+  }
+
+  function testChangeKeyManagerOwnerFailsNonOwner() public {
+    FVKeyManager userKeyManager = FVKeyManager(fvIdentityRegistry.register(address(this)));
+
+    vm.expectRevert("Ownable: caller is not the owner");
+    vm.prank(admin);
+    userKeyManager.setOwner(admin);
+  }
+
+  function testChangeKeyManagerOwnerFailsCallingRegistry() public {
+    address userKeyManager = fvIdentityRegistry.register(address(this));
+
+    vm.expectRevert(abi.encodeWithSelector(InvalidCaller.selector, gameAddr, userKeyManager));
+    vm.prank(gameAddr);
+    fvIdentityRegistry.updateKeyManagerOwner(address(this), gameAddr);
+
+    vm.expectRevert(abi.encodeWithSelector(InvalidCaller.selector, address(this), userKeyManager));
+    fvIdentityRegistry.updateKeyManagerOwner(address(this), gameAddr);
   }
 
   //

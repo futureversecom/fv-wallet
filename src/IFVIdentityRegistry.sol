@@ -11,6 +11,14 @@ interface IFVIdentityRegistry {
   event IdentityRegistered(address indexed owner, address indexed keyManager, address indexed identity);
 
   /**
+   * @notice Emitted when registering a new address.
+   * @param oldOwner The address of the previous owner registered for the identity.
+   * @param newOwner The address of the new owner registered for the identity.
+   * @param keyManager The address of the key manager registered for the owner.
+   */
+  event IdentityChanged(address indexed oldOwner, address indexed newOwner, address indexed keyManager);
+
+  /**
    * Get the key manager for a given address.
    * @param _addr The address to look up.
    * @return keyManager The key manager.
@@ -56,4 +64,12 @@ interface IFVIdentityRegistry {
    * @return identity The predicted identity address.
    */
   function predictProxyIdentityAddress(address _addr) external returns (address identity);
+
+  /**
+   * Update the owner of a key manager.
+   * @param owner The current owner.
+   * @param newOwner The new owner.
+   * @notice This function is called by the key manager.
+   */
+  function updateKeyManagerOwner(address owner, address newOwner) external;
 }
