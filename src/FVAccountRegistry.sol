@@ -17,7 +17,6 @@ import "./Utils.sol";
  * A manager for user accounts in the Futureverse ecosystem.
  */
 contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAccountRegistry {
-  using Utils for string;
 
   UpgradeableBeacon public fvAccountBeacon;
   UpgradeableBeacon public fvKeyManagerBeacon;
