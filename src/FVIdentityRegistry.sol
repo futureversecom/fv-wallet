@@ -135,15 +135,7 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
 
     // deploy KeyManager proxy - using Create2
     keyManager = address(
-      new BeaconProxy{salt: salt}(
-                                address(fvKeyManagerBeacon),
-                                abi.encodeWithSignature(
-                                  "initialize(address,address,address)",
-                                  address(userFVIdentityProxy),
-                                  _addr,
-                                  address(this)
-                                )
-                              )
+      new BeaconProxy{salt: salt}(address(fvKeyManagerBeacon), abi.encodeWithSignature("initialize(address,address,address)", address(userFVIdentityProxy), _addr, address(this)))
     );
 
     FVIdentity(payable(address(userFVIdentityProxy))).initialize(

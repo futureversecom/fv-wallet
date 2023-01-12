@@ -17,11 +17,7 @@ contract RegistryDeployer {
 
     // deploy proxy with proxy admin, initialize upgradable identity registry
     address proxy = address(
-      new TransparentUpgradeableProxy(
-                              identityRegistryImpl,
-                              admin,
-                              abi.encodeWithSignature("initialize(address)", keyManagerImpl)
-                            )
+      new TransparentUpgradeableProxy(identityRegistryImpl, admin, abi.encodeWithSignature("initialize(address)", keyManagerImpl))
     );
 
     emit Deployed(proxy, identityRegistryImpl, keyManagerImpl);
