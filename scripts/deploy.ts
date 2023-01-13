@@ -1,22 +1,38 @@
 import { ethers } from "hardhat";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const utilsLibFactory = await ethers.getContractFactory("Utils");
+  const utilsLib = await utilsLibFactory.deploy();
+  await utilsLib.deployed();
+  console.log("[library] Utils deployed to:", utilsLib.address);
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  const fvAccountRegistryFactory = await ethers.getContractFactory("FVAccountRegistry", {
+    libraries: { Utils: utilsLib.address, },
+  });
+  const fvAccountRegistry = await fvAccountRegistryFactory.deploy();
+  await fvAccountRegistry.deployed();
+  console.log("FVAccountRegistry deployed to:", fvAccountRegistry.address);
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const lsp6KeyManagerInitFactory = await ethers.getContractFactory("LSP6KeyManagerInit");
+  const lsp6KeyManagerInit = await lsp6KeyManagerInitFactory.deploy();
+  await lsp6KeyManagerInit.deployed();
+  console.log("LSP6KeyManagerInit deployed to:", lsp6KeyManagerInit.address);
 
-  await lock.deployed();
-
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+  const transparentUpgradeableProxyFactory = await ethers.getContractFactory("TransparentUpgradeableProxy");
+  const transparentUpgradeableProxy = await transparentUpgradeableProxyFactory.deploy(
+    fvAccountRegistry.address,
+    process.env.PUBLIC_ADDRESS!,
+    // abi.encodeWithSignature("initialize(address)", keyManagerImpl)
+    (new ethers.utils.Interface(["function initialize(address admin)"]))
+      .encodeFunctionData("initialize", [lsp6KeyManagerInit.address])
+  );
+  await transparentUpgradeableProxy.deployed();
+  console.log("TransparentUpgradeableProxy deployed to:", transparentUpgradeableProxy.address);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
