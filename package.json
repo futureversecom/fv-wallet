@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "This repo includes implementation of EIP725 based wallet and an account registry contract (to register wallet for new users).",
   "scripts": {
-    "deploy": "hardhat run scripts/deploy.ts"
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:porcini": "hardhat run scripts/deploy.ts --network porcini"
   },
   "devDependencies": {
+    "@erc725/smart-contracts": "^4.1.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.1",
+    "dotenv": "^16.0.3",
     "hardhat": "^2.12.6",
     "hardhat-preprocessor": "^0.1.5"
   }

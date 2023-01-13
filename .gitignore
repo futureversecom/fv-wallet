@@ -11,4 +11,7 @@ out/
 .env
 
 # Hardhat deps
-node_modules
+node_modules/
+artifacts/
+typechain-types/
+cache_hardhat/
