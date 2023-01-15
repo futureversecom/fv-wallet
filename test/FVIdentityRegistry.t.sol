@@ -213,7 +213,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
 
   function testRegisterAfterChangeOwnerSuccess() public {
     FVKeyManager userKeyManager1 = FVKeyManager(fvIdentityRegistry.register(address(this), 1));
-    userKeyManager1.setOwner(admin);
+    userKeyManager1.transferOwnership(admin);
 
     address proxyKeyManager = fvIdentityRegistry.predictProxyKeyManagerAddress(address(this), 2);
     address proxyIdentityAddress = fvIdentityRegistry.predictProxyIdentityAddress(address(this), 2);
@@ -229,7 +229,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
 
   function testRegisterAfterChangeOwnerFails() public {
     FVKeyManager userKeyManager1 = FVKeyManager(fvIdentityRegistry.register(address(this), 1));
-    userKeyManager1.setOwner(admin);
+    userKeyManager1.transferOwnership(admin);
 
     vm.expectRevert(abi.encodeWithSelector(IdentityAlreadyExists.selector, admin));
     FVKeyManager(fvIdentityRegistry.register(admin, 2));
@@ -237,7 +237,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
 
   function testRegisterAfterChangeOwnerNonceReuseFails() public {
     FVKeyManager userKeyManager1 = FVKeyManager(fvIdentityRegistry.register(address(this), 0));
-    userKeyManager1.setOwner(admin);
+    userKeyManager1.transferOwnership(admin);
 
     // Fails due to contract at deployment address
     // Adding a custom error code here will have a significant gas impact as we would have to precalculate the deployment addresses.
@@ -330,7 +330,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.expectEmit(true, false, true, true, address(fvIdentityRegistry));
     emit IdentityChanged(address(this), admin, address(userKeyManager));
-    userKeyManager.setOwner(admin);
+    userKeyManager.transferOwnership(admin);
 
     assertEq(userKeyManager.owner(), admin);
     assertEq(fvIdentityRegistry.keyManagerOf(admin), address(userKeyManager));
@@ -343,7 +343,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.expectRevert("Ownable: caller is not the owner");
     vm.prank(admin);
-    userKeyManager.setOwner(admin);
+    userKeyManager.transferOwnership(admin);
   }
 
   function testChangeKeyManagerOwnerFailsCallingRegistry() public {
@@ -362,7 +362,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
     fvIdentityRegistry.register(admin, 0);
 
     vm.expectRevert(abi.encodeWithSelector(IdentityAlreadyExists.selector, admin));
-    userKeyManager.setOwner(admin);
+    userKeyManager.transferOwnership(admin);
   }
 
   //

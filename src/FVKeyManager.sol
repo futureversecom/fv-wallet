@@ -36,7 +36,7 @@ contract FVKeyManager is LSP6KeyManagerInitVirtual, OwnableSilent {
    */
   function initialize(address target_, address owner_, address fvIdentityRegistry_) external initializer {
     LSP6KeyManagerInitVirtual._initialize(target_);
-    OwnableSilent._setOwner(owner_);
+    OwnableSilent._transferOwnership(owner_);
     fvIdentityRegistry = IFVIdentityRegistry(fvIdentityRegistry_);
   }
 
@@ -45,9 +45,9 @@ contract FVKeyManager is LSP6KeyManagerInitVirtual, OwnableSilent {
    * @param newOwner The new owner address.
    * @notice This can only be called by the current owner.
    */
-  function setOwner(address newOwner) external onlyOwner {
+  function transferOwnership(address newOwner) public override onlyOwner {
     fvIdentityRegistry.updateKeyManagerOwner(owner(), newOwner);
-    _setOwner(newOwner);
+    _transferOwnership(newOwner);
   }
 
   /**
