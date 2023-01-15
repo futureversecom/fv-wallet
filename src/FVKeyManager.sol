@@ -11,17 +11,17 @@ import {
   EXECUTE_SELECTOR, SETDATA_SELECTOR, SETDATA_ARRAY_SELECTOR
 } from "@erc725/smart-contracts/contracts/constants.sol";
 import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./IFVIdentityRegistry.sol";
 import "./custom/LSP6KeyManagerInitVirtual.sol";
-import "./custom/OwnableSilent.sol";
 
 /**
  * @title Proxy implementation of a contract acting as a controller of an ERC725 Account, using permissions stored in the ERC725Y storage
  * @notice This implementation includes an owner which is the only account able to manage permissions and ownership.
  * @dev Ownership changes flow back to the FVRegistry.
  */
-contract FVKeyManager is LSP6KeyManagerInitVirtual, OwnableSilent {
+contract FVKeyManager is LSP6KeyManagerInitVirtual, Ownable {
   IFVIdentityRegistry internal fvIdentityRegistry;
 
   constructor() {
@@ -36,7 +36,7 @@ contract FVKeyManager is LSP6KeyManagerInitVirtual, OwnableSilent {
    */
   function initialize(address target_, address owner_, address fvIdentityRegistry_) external initializer {
     LSP6KeyManagerInitVirtual._initialize(target_);
-    OwnableSilent._transferOwnership(owner_);
+    Ownable._transferOwnership(owner_);
     fvIdentityRegistry = IFVIdentityRegistry(fvIdentityRegistry_);
   }
 
@@ -47,7 +47,7 @@ contract FVKeyManager is LSP6KeyManagerInitVirtual, OwnableSilent {
    */
   function transferOwnership(address newOwner) public override onlyOwner {
     fvIdentityRegistry.updateKeyManagerOwner(owner(), newOwner);
-    _transferOwnership(newOwner);
+    Ownable._transferOwnership(newOwner);
   }
 
   /**
