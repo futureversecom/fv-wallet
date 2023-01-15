@@ -4,6 +4,7 @@
   "description": "This repo includes implementation of EIP725 based wallet and an account registry contract (to register wallet for new users).",
   "scripts": {
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:seed": "hardhat run scripts/deploy.ts --network seed",
     "deploy:porcini": "hardhat run scripts/deploy.ts --network porcini"
   },
   "devDependencies": {
