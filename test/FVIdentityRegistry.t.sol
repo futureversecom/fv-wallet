@@ -117,7 +117,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
 
     vm.expectRevert("Initializable: contract is already initialized");
 
-    fvKeyManager.initialize(address(this));
+    fvKeyManager.initialize(address(this), address(0), address(0));
   }
 
   function testFVIdentityOwnerIsZeroAddress() public {

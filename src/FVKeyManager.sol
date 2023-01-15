@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {_PERMISSION_CHANGEOWNER} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {
   InvalidERC725Function, NoPermissionsSet
 } from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
@@ -13,15 +13,15 @@ import {
 import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./IFVIdentityRegistry.sol";
-import "./custom/LSP6KeyManagerInitVirtual.sol";
+import {IFVIdentityRegistry} from "./IFVIdentityRegistry.sol";
+import {LSP6KeyManagerInitAbstract} from "./custom/LSP6KeyManagerInitAbstract.sol";
 
 /**
  * @title Proxy implementation of a contract acting as a controller of an ERC725 Account, using permissions stored in the ERC725Y storage
  * @notice This implementation includes an owner which is the only account able to manage permissions and ownership.
  * @dev Ownership changes flow back to the FVRegistry.
  */
-contract FVKeyManager is LSP6KeyManagerInitVirtual, Ownable {
+contract FVKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
   IFVIdentityRegistry internal fvIdentityRegistry;
 
   constructor() {
@@ -35,8 +35,10 @@ contract FVKeyManager is LSP6KeyManagerInitVirtual, Ownable {
    * @param fvIdentityRegistry_ The address of the FV Identity Registry
    */
   function initialize(address target_, address owner_, address fvIdentityRegistry_) external initializer {
-    LSP6KeyManagerInitVirtual._initialize(target_);
-    Ownable._transferOwnership(owner_);
+    _transferOwnership(owner_);
+
+    LSP6KeyManagerInitAbstract._initialize(target_);
+
     fvIdentityRegistry = IFVIdentityRegistry(fvIdentityRegistry_);
   }
 
@@ -47,7 +49,7 @@ contract FVKeyManager is LSP6KeyManagerInitVirtual, Ownable {
    */
   function transferOwnership(address newOwner) public override onlyOwner {
     fvIdentityRegistry.updateKeyManagerOwner(owner(), newOwner);
-    Ownable._transferOwnership(newOwner);
+    _transferOwnership(newOwner);
   }
 
   /**

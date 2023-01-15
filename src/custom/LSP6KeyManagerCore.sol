@@ -10,7 +10,6 @@ import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManag
 import {ILSP14Ownable2Step} from "@lukso/lsp-smart-contracts/contracts/LSP14Ownable2Step/ILSP14Ownable2Step.sol";
 import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 // libraries
 import {GasLib} from "@lukso/lsp-smart-contracts/contracts/Utils/GasLib.sol";
@@ -52,11 +51,12 @@ import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 import {_LSP17_EXTENSION_PREFIX} from "@lukso/lsp-smart-contracts/contracts/LSP17ContractExtension/LSP17Constants.sol";
 
 /**
- * @title LSP6KeyManagerInitVirtual
- * @dev modified version of LSP6KeyManagerInitVirtual implementation, including functions down to
- * LSP6KeyManagerCore where the virtual keyword has been added to allow overrides.
+ * @title Core implementation of the LSP6 Key Manager standard.
+ * @author Fabian Vogelsteller <frozeman>, Jean Cavallera (CJ42), Yamen Merhi (YamenMerhi)
+ * @dev This contract acts as a controller for an ERC725 Account.
+ * Permissions for controllers are stored in the ERC725Y storage of the ERC725 Account and can be updated using `setData(...)`.
  */
-abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyManager {
+abstract contract LSP6KeyManagerCore is ERC165, ILSP6KeyManager {
   using LSP2Utils for *;
   using LSP6Utils for *;
   using Address for address;
@@ -72,29 +72,6 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
   bool private _reentrancyStatus;
 
   mapping(address => mapping(uint256 => uint256)) internal _nonceStore;
-
-  /**
-   * @dev initialize (= lock) base implementation contract on deployment
-   */
-  constructor() {
-    _disableInitializers();
-  }
-
-  /**
-   * @notice Initiate the account with the address of the ERC725Account contract and sets LSP6KeyManager InterfaceId
-   * @param target_ The address of the ER725Account to control
-   */
-  function initialize(address target_) external virtual initializer onlyInitializing {
-    _initialize(target_);
-  }
-
-  function _initialize(address target_) internal virtual onlyInitializing {
-    if (target_ == address(0)) {
-      revert InvalidLSP6Target();
-    }
-    _target = target_;
-    _setupLSP6ReentrancyGuard();
-  }
 
   function target() public view returns (address) {
     return _target;
@@ -265,7 +242,7 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @param from caller address
    * @param idx (channel id + nonce within the channel)
    */
-  function _isValidNonce(address from, uint256 idx) internal view returns (bool) {
+  function _isValidNonce(address from, uint256 idx) internal view virtual returns (bool) {
     // idx % (1 << 128) = nonce
     // (idx >> 128) = channel
     // equivalent to: return (nonce == _nonceStore[_from][channel]
@@ -276,7 +253,6 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @dev verify if the `from` address is allowed to execute the `payload` on the `target`.
    * @param from either the caller of `execute(...)` or the signer of `executeRelayCall(...)`.
    * @param payload the payload to execute on the `target`.
-   * @dev virtual keyword added.
    */
   function _verifyPermissions(address from, bytes calldata payload) internal view virtual {
     bytes32 permissions = ERC725Y(_target).getPermissionsFor(from);
