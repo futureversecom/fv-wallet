@@ -104,7 +104,8 @@ abstract contract LSP6KeyManagerInitVirtual is Initializable, ERC165, ILSP6KeyMa
    * @dev See {IERC165-supportsInterface}.
    */
   function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-    return interfaceId == _INTERFACEID_LSP6 || interfaceId == _INTERFACEID_ERC1271 || super.supportsInterface(interfaceId);
+    return interfaceId == _INTERFACEID_LSP6 || interfaceId == _INTERFACEID_ERC1271
+      || super.supportsInterface(interfaceId);
   }
 
   /**

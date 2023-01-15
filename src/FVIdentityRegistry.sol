@@ -17,7 +17,6 @@ import "./Utils.sol";
  * A manager for user identities in the Futureverse ecosystem.
  */
 contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIdentityRegistry {
-
   UpgradeableBeacon public fvIdentityBeacon;
   UpgradeableBeacon public fvKeyManagerBeacon;
   mapping(address => address) internal managers;
