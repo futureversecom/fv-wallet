@@ -49,6 +49,10 @@ const config: HardhatUserConfig = {
       url: "http://localhost:8545",
       accounts: [process.env.PRIVATE_KEY!],
     },
+    seed: {
+      url: "http://localhost:9933",
+      accounts: [ process.env.PRIVATE_KEY! ],
+    },
     porcini: {
       url: "https://porcini.au.rootnet.app/",
       accounts: [ process.env.PRIVATE_KEY! ],
