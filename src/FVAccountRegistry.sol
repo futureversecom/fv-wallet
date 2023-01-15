@@ -17,7 +17,6 @@ import "./Utils.sol";
  * A manager for user accounts in the Futureverse ecosystem.
  */
 contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAccountRegistry {
-  using Utils for string;
 
   UpgradeableBeacon public fvAccountBeacon;
   UpgradeableBeacon public fvKeyManagerBeacon;
@@ -136,16 +135,16 @@ contract FVAccountRegistry is Initializable, OwnableUpgradeable, ERC165, IFVAcco
     // deploy KeyManager proxy - using Create2
     keyManager = address(
       new BeaconProxy{salt: salt}(
-                                    address(fvKeyManagerBeacon),
-                                    abi.encodeWithSignature(
-                                        "initialize(address)",
-                                        address(userFVAccountProxy)
-                                    )
-                                )
+                                          address(fvKeyManagerBeacon),
+                                          abi.encodeWithSignature(
+                                              "initialize(address)",
+                                              address(userFVAccountProxy)
+                                          )
+                                      )
     );
 
     LSP0ERC725AccountLateInit(payable(address(userFVAccountProxy))).initialize(
-      keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, _addr), ALL_PERMISSIONS.toBytes()
+      keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, _addr), Utils.toBytes(ALL_PERMISSIONS)
     );
 
     managers[_addr] = keyManager;
