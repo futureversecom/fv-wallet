@@ -91,7 +91,7 @@ Note: Dummy values (private key and public address) for `Alice` have been provid
 **Hardhat:**
 
 ```sh
-npm run deploy:local
+yarn deploy:local
 ```
 
 **Forge:**
@@ -105,7 +105,7 @@ forge script script/RegistryDeployer.s.sol:Deployment --fork-url http://localhos
 **Hardhat:**
 
 ```sh
-npm run deploy:porcini
+yarn deploy:porcini
 ```
 
 **Forge:**
