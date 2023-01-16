@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import {RegistryDeployer} from "../src/RegistryDeployer.sol";
-import "../src/Utils.sol";
+import "../src/libraries/Utils.sol";
 
 import "./helpers/GasHelper.t.sol";
 import "./helpers/MockContracts.t.sol";

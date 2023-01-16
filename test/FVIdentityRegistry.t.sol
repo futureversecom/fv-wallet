@@ -21,7 +21,7 @@ import {IFVIdentityRegistry} from "../src/IFVIdentityRegistry.sol";
 import {FVIdentityRegistry} from "../src/FVIdentityRegistry.sol";
 import {FVIdentity} from "../src/FVIdentity.sol";
 import {FVKeyManager} from "../src/FVKeyManager.sol";
-import "../src/Utils.sol";
+import "../src/libraries/Utils.sol";
 
 import "./helpers/GasHelper.t.sol";
 import "./helpers/DataHelper.t.sol";

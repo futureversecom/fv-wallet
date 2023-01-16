@@ -10,7 +10,7 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
 import {IFVIdentityRegistry} from "./IFVIdentityRegistry.sol";
 import {FVIdentity} from "./FVIdentity.sol";
 import {FVKeyManager} from "./FVKeyManager.sol";
-import "./Utils.sol";
+import "./libraries/Utils.sol";
 
 /**
  * FV Identity Registry
