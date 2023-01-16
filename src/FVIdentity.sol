@@ -9,7 +9,7 @@ error CallerNotInitializer(address initializer, address caller);
  * @title Deployable Proxy Implementation of ERC725Account with late initialisation.
  * @dev Call initialize with the new owner as soon as it is available.
  */
-contract LSP0ERC725AccountLateInit is LSP0ERC725AccountInitAbstract {
+contract FVIdentity is LSP0ERC725AccountInitAbstract {
   address internal immutable _initializer;
 
   constructor() {

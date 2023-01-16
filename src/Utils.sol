@@ -5,13 +5,20 @@ pragma solidity ^0.8.17;
  * @dev reverts when address `addr` is already registered
  * @param addr the address to register
  */
-error AccountAlreadyExists(address addr);
+error IdentityAlreadyExists(address addr);
 
 /**
- * @dev Thrown when an account is not found for the given address.
- * @param addr The address that does not have a registered account.
+ * @dev Thrown when an identity is not found for the given address.
+ * @param addr The address that does not have a registered identity.
  */
-error AccountNotRegistered(address addr);
+error IdentityNotRegistered(address addr);
+
+/**
+ * @dev Thrown when the caller is invalid.
+ * @param actual The actual caller.
+ * @param expected The expected caller.
+ */
+error InvalidCaller(address actual, address expected);
 
 // All Permissions currently exclude REENTRANCY, DELEGATECALL and SUPER_DELEGATECALL for security
 // source: https://github.com/lukso-network/lsp-smart-contracts/blob/b97b186430eb4e4984c6c366356d62119d5930cc/constants.js#L182

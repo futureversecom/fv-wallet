@@ -8,7 +8,7 @@ import "../src/Utils.sol";
 import "./helpers/GasHelper.t.sol";
 import "./helpers/MockContracts.t.sol";
 
-contract FVAccountRegistryBaseTest is Test, GasHelper {
+contract RegistryDeployerTest is Test, GasHelper {
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
 
   // re-declare event for assertions
