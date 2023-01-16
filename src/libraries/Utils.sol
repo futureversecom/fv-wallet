@@ -34,7 +34,7 @@ library Utils {
 
   function toHexStringNoPrefix(uint256 value, uint256 length) internal pure returns (string memory) {
     bytes memory buffer = new bytes(2 * length);
-    for (uint256 i = 2 * length + 1; i > 1; --i) {
+    for (uint256 i = 2 * length + 1; i > 1; i = _uncheckedDecr(i)) {
       buffer[i - 2] = SYMBOLS[value & 0xf];
       value >>= 4;
     }
@@ -78,7 +78,7 @@ library Utils {
     bytes memory ss = bytes(s);
     require(ss.length % 2 == 0); // length must be even
     bytes memory r = new bytes(ss.length/2);
-    for (uint256 i = 0; i < ss.length / 2; ++i) {
+    for (uint256 i = 0; i < ss.length / 2; i = _uncheckedInc(i)) {
       r[i] = bytes1(fromHexChar(uint8(ss[2 * i])) * 16 + fromHexChar(uint8(ss[2 * i + 1])));
     }
     return r;
@@ -92,5 +92,17 @@ library Utils {
    */
   function permissionsKey(bytes12 permissionPrefix, address addr) public pure returns (bytes32) {
     return bytes32(bytes.concat(permissionPrefix, bytes20(addr)));
+  }
+
+  function _uncheckedInc(uint256 i) internal pure returns (uint256) {
+    unchecked {
+      return i + 1;
+    }
+  }
+
+  function _uncheckedDecr(uint256 i) internal pure returns (uint256) {
+    unchecked {
+      return i - 1;
+    }
   }
 }
