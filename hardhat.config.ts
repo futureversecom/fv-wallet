@@ -47,11 +47,11 @@ const config: HardhatUserConfig = {
   },
   networks: {
     localhost: {
-      url: "http://localhost:8545",
+      url: "http://127.0.0.1:8545",
       accounts: [process.env.PRIVATE_KEY!],
     },
     seed: {
-      url: "http://localhost:9933",
+      url: "http://127.0.0.1:9933",
       accounts: [ process.env.PRIVATE_KEY! ],
     },
     porcini: {
