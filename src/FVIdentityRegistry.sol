@@ -123,13 +123,13 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
       revert IdentityAlreadyExists(_addr);
     }
 
-    // deploy ERC725Account proxy - using Create2
+    // deploy ERC725Account proxy
     BeaconProxy userFVIdentityProxy = new BeaconProxy(
       address(fvIdentityBeacon),
       bytes("") // dont `initialize` (done below)
     );
 
-    // deploy KeyManager proxy - using Create2
+    // deploy KeyManager proxy
     keyManager = address(
       new BeaconProxy(address(fvKeyManagerBeacon), abi.encodeWithSignature("initialize(address,address,address)", address(userFVIdentityProxy), _addr, address(this)))
     );
