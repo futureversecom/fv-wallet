@@ -32,12 +32,9 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    * @dev Deploys the identity implementation so this contract is the owner.
    * @dev Deploys beacons for these implementations.
    */
-  function initialize(address fvKeyManager) external virtual initializer {
+  function initialize(address fvIdentity, address fvKeyManager) external virtual initializer {
     // init initializers
     __Ownable_init();
-
-    // Deploy initializable ERC725Account (LSP0) and LSP6KeyManager contracts
-    FVIdentity fvIdentity = new FVIdentity();
 
     // Deploy beacons for the contracts (which user wallet proxies will point to)
     fvIdentityBeacon = new UpgradeableBeacon(address(fvIdentity));
