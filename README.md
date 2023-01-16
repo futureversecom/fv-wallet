@@ -88,16 +88,35 @@ Note: Dummy values (private key and public address) for `Alice` have been provid
 1. Start [local node (e.g. anvil)](https://book.getfoundry.sh/tutorials/solidity-scripting#deploying-locally)
 2. Run command:
 
+**Hardhat:**
+
+```sh
+yarn deploy:local
+```
+
+**Forge:**
+
 ```sh
 forge script script/RegistryDeployer.s.sol:Deployment --fork-url http://localhost:8545 --broadcast
 ```
 
 #### Prod deployment
 
+**Hardhat:**
+
+```sh
+yarn deploy:porcini
+```
+
+**Forge:**
+
 ```sh
 source .env
 forge script script/RegistryDeployer.s.sol:Deployment --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
 ```
+
+Note: The `--verify` flag will verify the deployed contracts on Etherscan.
+Note2: Forge cannot be used to deploy to TRN - due to [issue](https://github.com/foundry-rs/foundry/issues/3868)
 
 ---
 

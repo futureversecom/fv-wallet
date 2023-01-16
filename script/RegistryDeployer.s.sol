@@ -2,11 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
-import {LSP6KeyManagerInit} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInit.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-
-import "../src/RegistryDeployer.sol";
+import {RegistryDeployer} from "../src/RegistryDeployer.sol";
 
 contract Deployment is Script {
   function run() external {

@@ -7,7 +7,7 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 
-import "../../src/Utils.sol";
+import "../../src/libraries/Utils.sol";
 
 import "./MockContracts.t.sol";
 

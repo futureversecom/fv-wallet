@@ -1,19 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInitAbstract.sol";
-
-error CallerNotInitializer(address initializer, address caller);
+import {LSP0ERC725AccountInitAbstract} from
+  "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInitAbstract.sol";
 
 /**
  * @title Deployable Proxy Implementation of ERC725Account with late initialisation.
- * @dev Call initialize with the new owner as soon as it is available.
+ * @dev Call initialize as soon as it is available.
  */
 contract FVIdentity is LSP0ERC725AccountInitAbstract {
-  address internal immutable _initializer;
-
   constructor() {
-    _initializer = msg.sender;
     _disableInitializers();
   }
 
@@ -24,9 +20,6 @@ contract FVIdentity is LSP0ERC725AccountInitAbstract {
    * @param dataKey data value to set
    */
   function initialize(address newOwner, bytes32 dataKey, bytes memory dataValue) external payable initializer {
-    if (msg.sender != _initializer) {
-      revert CallerNotInitializer(_initializer, msg.sender);
-    }
     LSP0ERC725AccountInitAbstract._initialize(newOwner);
     _setData(dataKey, dataValue);
   }
