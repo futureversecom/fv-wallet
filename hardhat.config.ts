@@ -25,10 +25,11 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  // https://book.getfoundry.sh/config/hardhat
   preprocess: {
     eachLine: (hre) => ({
       transform: (line: string) => {
-        if (line.match(/^\s*import /i)) {
+        if (line.match(/".*.sol";$/)) { // match all lines with `"<any-import-path>.sol";`
           for (const [from, to] of getRemappings()) {
             if (line.includes(from)) {
               line = line.replace(from, to);
