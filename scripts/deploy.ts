@@ -8,13 +8,13 @@ async function main() {
   const fvAccountFactory = await ethers.getContractFactory("FVIdentity");
   const fvAccount = await fvAccountFactory.deploy();
   await fvAccount.deployed();
-  console.log("FVIdentity deployed to:", fvAccount.address);
+  console.log("[contract] FVIdentity deployed to:", fvAccount.address);
 
   // deploy FVKeyManager contract
   const keyManagerFactory = await ethers.getContractFactory("FVKeyManager");
   const fvKeyManager = await keyManagerFactory.deploy();
   await fvKeyManager.deployed();
-  console.log("FVKeyManager deployed to:", fvKeyManager.address);
+  console.log("[contract] FVKeyManager deployed to:", fvKeyManager.address);
 
   // deploy Utils library
   const utilsLibFactory = await ethers.getContractFactory("Utils");
@@ -28,7 +28,7 @@ async function main() {
   });
   const fvIdentityRegistry = await fvIdentityRegistryFactory.deploy();
   await fvIdentityRegistry.deployed();
-  console.log("FVIdentityRegistry deployed to:", fvIdentityRegistry.address);
+  console.log("[contract] FVIdentityRegistry deployed to:", fvIdentityRegistry.address);
 
   // deploy TransparentUpgradeableProxy contract with PUBLIC_ADDRESS as admin
   // initialize FVIdentityRegistry contract
@@ -41,7 +41,7 @@ async function main() {
       .encodeFunctionData("initialize", [fvAccount.address, fvKeyManager.address])
   );
   await transparentUpgradeableProxy.deployed();
-  console.log("TransparentUpgradeableProxy deployed to:", transparentUpgradeableProxy.address);
+  console.log("[contract] TransparentUpgradeableProxy deployed to:", transparentUpgradeableProxy.address);
 }
 
 main().catch((error) => {
