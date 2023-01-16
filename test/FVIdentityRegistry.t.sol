@@ -19,10 +19,8 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IFVIdentityRegistry} from "../src/IFVIdentityRegistry.sol";
 import {FVIdentityRegistry} from "../src/FVIdentityRegistry.sol";
+import {FVIdentity} from "../src/FVIdentity.sol";
 import {FVKeyManager} from "../src/FVKeyManager.sol";
-import {FVAccount} from "../src/FVAccount.sol";
-import {IFVAccountRegistry} from "../src/IFVAccountRegistry.sol";
-import {FVAccountRegistry} from "../src/FVAccountRegistry.sol";
 import "../src/Utils.sol";
 
 import "./helpers/GasHelper.t.sol";
@@ -35,7 +33,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
 
   IFVIdentityRegistry public fvIdentityRegistry;
   IFVIdentityRegistry private registryImpl;
-  FVAccount private fvAccountImpl;
+  FVIdentity private fvAccountImpl;
   FVKeyManager private keyManagerImpl;
   MockERC20 public mockERC20;
 
@@ -63,7 +61,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
     registryImpl = new FVIdentityRegistry();
 
     // deploy fv account implementation
-    fvAccountImpl = new LSP0ERC725AccountLateInit();
+    fvAccountImpl = new FVIdentity();
 
     // deploy key manager implementation
     keyManagerImpl = new FVKeyManager();
@@ -743,7 +741,7 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
     // `reinitializer(version)` modifier on `initialize` function
     vm.expectRevert("Initializable: contract is already initialized");
     proxy.upgradeToAndCall(
-      fvAccountRegistryV3,
+      fvIdentityRegistryV3,
       abi.encodeWithSignature("initialize(address,address)", address(fvAccountImpl), address(keyManagerImpl))
     );
 
