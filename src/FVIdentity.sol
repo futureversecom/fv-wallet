@@ -8,7 +8,6 @@ import "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account
  * @dev Call initialize as soon as it is available.
  */
 contract FVIdentity is LSP0ERC725AccountInitAbstract {
-
   constructor() {
     _disableInitializers();
   }
