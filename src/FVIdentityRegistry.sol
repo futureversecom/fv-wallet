@@ -37,7 +37,7 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
     __Ownable_init();
 
     // Deploy beacons for the contracts (which user wallet proxies will point to)
-    fvIdentityBeacon = new UpgradeableBeacon(address(fvIdentity));
+    fvIdentityBeacon = new UpgradeableBeacon(fvIdentity);
     fvKeyManagerBeacon = new UpgradeableBeacon(fvKeyManager);
   }
 
