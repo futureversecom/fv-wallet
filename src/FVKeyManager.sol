@@ -13,7 +13,7 @@ import {
 import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IFVIdentityRegistry} from "./IFVIdentityRegistry.sol";
+import {IFVIdentityRegistry} from "./interfaces/IFVIdentityRegistry.sol";
 import {LSP6KeyManagerInitAbstract} from "./custom/LSP6KeyManagerInitAbstract.sol";
 
 /**

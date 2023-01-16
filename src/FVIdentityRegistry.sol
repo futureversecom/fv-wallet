@@ -7,7 +7,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-import {IFVIdentityRegistry} from "./IFVIdentityRegistry.sol";
+import {IFVIdentityRegistry} from "./interfaces/IFVIdentityRegistry.sol";
 import {FVIdentity} from "./FVIdentity.sol";
 import {FVKeyManager} from "./FVKeyManager.sol";
 import "./libraries/Utils.sol";

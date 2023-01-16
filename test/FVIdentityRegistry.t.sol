@@ -17,7 +17,7 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {IFVIdentityRegistry} from "../src/IFVIdentityRegistry.sol";
+import {IFVIdentityRegistry} from "../src/interfaces/IFVIdentityRegistry.sol";
 import {FVIdentityRegistry} from "../src/FVIdentityRegistry.sol";
 import {FVIdentity} from "../src/FVIdentity.sol";
 import {FVKeyManager} from "../src/FVKeyManager.sol";
