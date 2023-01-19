@@ -6,6 +6,7 @@ import {
   InvalidERC725Function, NoPermissionsSet
 } from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
 import {LSP6Utils} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Utils.sol";
+import {LSP6KeyManagerInitAbstract} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInitAbstract.sol";
 import {ILSP14Ownable2Step} from "@lukso/lsp-smart-contracts/contracts/LSP14Ownable2Step/ILSP14Ownable2Step.sol";
 import {
   EXECUTE_SELECTOR, SETDATA_SELECTOR, SETDATA_ARRAY_SELECTOR
@@ -14,7 +15,6 @@ import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IFVIdentityRegistry} from "./interfaces/IFVIdentityRegistry.sol";
-import {LSP6KeyManagerInitAbstract} from "./custom/LSP6KeyManagerInitAbstract.sol";
 
 /**
  * @title Proxy implementation of a contract acting as a controller of an ERC725 Account, using permissions stored in the ERC725Y storage

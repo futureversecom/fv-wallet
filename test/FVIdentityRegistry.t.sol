@@ -27,7 +27,7 @@ import "./helpers/GasHelper.t.sol";
 import "./helpers/DataHelper.t.sol";
 import "./helpers/MockContracts.t.sol";
 
-contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
+contract FVIdentityRegistryTest is Test, GasHelper, DataHelper {
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
   address private constant gameAddr = address(0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045);
 
@@ -392,10 +392,11 @@ contract FVIdentityRegistryBaseTest is Test, GasHelper, DataHelper {
     // Give allowed calls permissions to erc20
     address[] memory allowed = new address[](1);
     allowed[0] = address(mockERC20);
+    bytes memory permissionData = createCallContractWhitelistData(allowed);
     execData = abi.encodeWithSelector(
       bytes4(keccak256("setData(bytes32,bytes)")),
       Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_ALLOWEDCALLS_PREFIX, gameAddr), // AddressPermissions:AllowedCalls
-      createCallContractWhitelistData(allowed)
+      permissionData
     );
     userKeyManager.execute(execData);
 
