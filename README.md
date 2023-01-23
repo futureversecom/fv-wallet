@@ -47,6 +47,63 @@ note: This bytes4 interface id is calculated as the XOR of the interfaceId of th
 
 - Additional docs: https://docs.lukso.tech/standards/universal-profile/lsp0-erc725account/#what-does-this-standard-represent-
 
+## Architecture
+
+![Alt text](./screenshots/architecture.svg)
+
+- The [FVIdentityRegistry](./src/FVIdentityRegistry.sol) is the core contract which is responsible for creating user digital identities/accounts
+  - It is deployed via TransparentUpgradableProxy pattern - to support future upgrades
+  - note: We do not use hardhat upgrades lib to deploy the proxy, instead an EOA is simply set as the proxy owner (instead of a contract)
+- The [FVIdentity](./src/FVIdentity.sol) is a modified version of the LSP0/ERC725Account contract, this is the digital identity contract (responsible for on-chain actions/calls)
+  - This is deployed as a logic contract (implementation which a beacon proxy would point to)
+- The [FVKeyManager](./src/FVKeyManager.sol) is modified version of the LSP6 contract, this is responsible for the permissions logic of the FVIdenttity contract
+- `UpgradableBeacon` - 2 upgradable beacons are deployed, which point to `FVIdentity` and `FVKeyManager` implementation contracts
+  - The beacon proxy pattern is used here (described [here](https://docs.openzeppelin.com/contracts/3.x/api/proxy)), this allows admin to upgrade all user accounts (FVIdentity and FVKeyManager) in case new functionality/fixes are to be introduced. This is a cost-effective approach to support mass-upgrades on all user accounts (with single TX)
+- The `register(address)` function is used to create new digital identity for an address
+  - This creates a `BeaconProxy` pointing to the `FVIdentity` upgradable beacon; inheriting logic of the `FVIdentity` contract
+  - This also creates a `BeaconProxy` pointing to the `FVKeyManager` upgradable beacon; inheriting logic of the `FVKeyManager` contract
+  - The proxies are setup such that the user's `FVKeyManager` proxy points to the `FVIdentity` (target) and the `FVIdentity` proxy owner is set to be the `FVKeyManager` proxy contract
+    - The owner of the `FVKeyManager` proxy is the EOA (address being registered)
+      - The `FVKeyManager` proxy contract is the only entrypoint into the `FVIdentity` proxy contract (user's digital identity)
+  - note: The proxies only hold state of the respective contracts, they are upgradable (upgrading beacon upgrades digital identity contract logic)
+
+### Deployment procedure
+
+The [deployment script](./scripts/deploy.ts) will perform the following actions:
+
+```mermaid
+sequenceDiagram
+  title Contract deployment
+
+  participant Admin as Admin EOA
+  participant TRN as Root Network
+
+  Admin ->> TRN: Deploy FVIdentity logic contract
+  Admin ->> TRN: Deploy FVKeyManager logic contract
+  Admin ->> TRN: Deploy Utils Library
+  Admin ->> TRN: Deploy FVIdentityRegistry logic contract with linked Utils library
+  Admin ->> TRN: Deploy TransparentUpgradeableProxy with FVIdentityRegistry, initialize upon deployment 
+  TRN -->> TRN: deploy UpgradableBeacons, point implementations to FVIdentity and FVKeyManager contracts
+```
+
+### User registration flow
+
+```mermaid
+sequenceDiagram
+  title Account registration
+
+  participant User
+  participant Registry as FVIdentityRegistry
+
+  User ->> Registry: Calls register(address)
+  Registry -->> Registry: Deploy BeaconProxy (pointing to FVIdentity beacon impl)
+  Registry -->> Registry: Deploy BeaconProxy (pointing to FVKeyManager beacon impl)
+  Registry -->> Registry: Initialize FVKeyManager proxy with FVIdentity proxy as target
+  Registry -->> Registry: Initialize FVIdentity proxy with FVKeyManager proxy as owner (all permissions)
+  Registry -->> Registry: Register FVKeyManager proxy as the user addresses account manager
+  Registry ->> User: Emit IdentityRegistered and return FVKeyManager (proxy) address 
+```
+
 ## Setup
 
 ### Pre-requisites
