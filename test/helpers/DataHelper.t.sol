@@ -64,23 +64,40 @@ contract DataHelper {
   /**
    * Create permission data for whitelisting all calls to given address.
    * @param addrs The addresses to whitelist.
-   * @return permissionData The data to set to allow access to all addresses.
+   * @return allowedCalls The data to set to allow access to given addresses.
    * @notice This method whitelists all interfaces and methods.
    * @dev Include user's existing permissions when constructing this list so they are not overridden.
    */
-  function createCallContractWhitelistData(address[] memory addrs) public pure returns (bytes memory) {
-    string memory s = "";
+  function createCallContractWhitelistData(address[] memory addrs) public pure returns (bytes memory allowedCalls) {
     // Create compact bytes array for permission data
     for (uint256 i = 0; i < addrs.length; i++) {
-      // https://github.com/lukso-network/lsp-smart-contracts/blob/6540c98f174c2d6b8340502725bcd338da7c0cca/contracts/LSP6KeyManager/LSP6KeyManagerCore.sol#L872
-      s = string.concat(
-        s,
-        "1cffffffff", // 1c (length) + allow all interfaces
-        Utils.toHexStringNoPrefix(addrs[i]), // addr allowed to access
-        "ffffffff" // allow all methods
-      );
+      bytes[] memory newElement = new bytes[](3);
+      newElement[0] = abi.encodePacked(bytes4(0xffffffff)); // All interfaces
+      newElement[1] = abi.encodePacked(addrs[i]);
+      newElement[2] = abi.encodePacked(bytes4(0xffffffff)); // All methods
+      bytes memory newAllowedCalls = generateCompactByteArrayElement(newElement);
+      allowedCalls = bytes.concat(allowedCalls, newAllowedCalls);
     }
-    return Utils.toBytes(s);
+    return allowedCalls;
+  }
+
+  // https://github.com/lukso-network/lsp-smart-contracts/blob/5f4b9a7b2e224f1536be8d5164f58b57016cafcd/tests/foundry/GasTests/UniversalProfileTestsHelper.sol#L51
+  function generateCompactByteArrayElement(bytes[] memory data)
+    public
+    pure
+    returns (bytes memory)
+  {
+    uint256 totalLength = 0;
+    bytes memory concatenatedBytes = new bytes(0);
+    for (uint256 i = 0; i < data.length; i++) {
+      totalLength += data[i].length;
+      concatenatedBytes = bytes.concat(concatenatedBytes, data[i]);
+    }
+
+    //check that the total length is less than 256
+    require(totalLength < type(uint16).max, "DataHelper: CBA Element too big");
+
+    return bytes.concat(bytes2(uint16(totalLength)), concatenatedBytes);
   }
 
   function signForRelayCall(
