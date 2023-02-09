@@ -147,10 +147,8 @@ contract FVIdentityRegistryTest is Test, GasHelper, DataHelper {
   //
   function testUnregistedErrors() public {
     address zero = address(0);
-    vm.expectRevert(abi.encodeWithSelector(IdentityNotRegistered.selector, zero));
-    fvIdentityRegistry.identityOf(zero);
-    vm.expectRevert(abi.encodeWithSelector(IdentityNotRegistered.selector, zero));
-    fvIdentityRegistry.keyManagerOf(zero);
+    assertEq(fvIdentityRegistry.identityOf(zero), address(0));
+    assertEq(fvIdentityRegistry.keyManagerOf(zero), address(0));
   }
 
   function testRegisterOfZeroAddress() public {
@@ -306,7 +304,6 @@ contract FVIdentityRegistryTest is Test, GasHelper, DataHelper {
 
     assertEq(userKeyManager.owner(), admin);
     assertEq(fvIdentityRegistry.keyManagerOf(admin), address(userKeyManager));
-    vm.expectRevert(abi.encodeWithSelector(IdentityNotRegistered.selector, address(this)));
     assertEq(fvIdentityRegistry.keyManagerOf(address(this)), address(0));
   }
 

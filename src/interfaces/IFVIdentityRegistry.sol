@@ -21,7 +21,7 @@ interface IFVIdentityRegistry {
   /**
    * Get the key manager for a given address.
    * @param _addr The address to look up.
-   * @return keyManager The key manager.
+   * @return keyManager The key manager or address(0) if not found.
    */
   function keyManagerOf(address _addr) external view returns (address keyManager);
 

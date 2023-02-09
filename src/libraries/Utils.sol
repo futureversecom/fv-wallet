@@ -8,12 +8,6 @@ pragma solidity ^0.8.17;
 error IdentityAlreadyExists(address addr);
 
 /**
- * @dev Thrown when an identity is not found for the given address.
- * @param addr The address that does not have a registered identity.
- */
-error IdentityNotRegistered(address addr);
-
-/**
  * @dev Thrown when the caller is invalid.
  * @param actual The actual caller.
  * @param expected The expected caller.
