@@ -51,11 +51,7 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    * @return keyManager The key manager.
    */
   function keyManagerOf(address _addr) public view returns (address keyManager) {
-    keyManager = managers[_addr];
-    if (keyManager == address(0)) {
-      revert IdentityNotRegistered(_addr);
-    }
-    return keyManager;
+    return managers[_addr];
   }
 
   /**
@@ -65,6 +61,9 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    */
   function identityOf(address _addr) external view returns (address identity) {
     address keyManager = keyManagerOf(_addr);
+    if (keyManager == address(0)) {
+      return address(0);
+    }
     return FVKeyManager(keyManager).target();
   }
 
