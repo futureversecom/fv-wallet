@@ -58,6 +58,10 @@ const config: HardhatUserConfig = {
       url: "https://porcini.au.rootnet.app/",
       accounts: [ process.env.PRIVATE_KEY! ],
     },
+    root: {
+      url: "https://root.rootnet.live",
+      accounts: [ process.env.PRIVATE_KEY! ],
+    },
   },
 };
 
