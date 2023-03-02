@@ -62,7 +62,7 @@ contract E2EWalletRegistry is Initializable, OwnableUpgradeable, ERC165, IE2EWal
   function identityOf(address _addr) external view returns (address identity) {
     address keyManager = keyManagerOf(_addr);
     if (keyManager == address(0)) return address(0);
-    return FVKeyManager(keyManager).target();
+    return E2EWalletKeyManager(keyManager).target();
   }
 
   /**
@@ -126,7 +126,7 @@ contract E2EWalletRegistry is Initializable, OwnableUpgradeable, ERC165, IE2EWal
       new BeaconProxy(address(fvKeyManagerBeacon), abi.encodeWithSignature("initialize(address,address,address)", address(userFVIdentityProxy), _addr, address(this)))
     );
 
-    FVIdentity(payable(address(userFVIdentityProxy))).initialize(
+    E2EWallet(payable(address(userFVIdentityProxy))).initialize(
       keyManager, Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, _addr), Utils.toBytes(ALL_PERMISSIONS)
     );
 
@@ -160,6 +160,6 @@ contract E2EWalletRegistry is Initializable, OwnableUpgradeable, ERC165, IE2EWal
    * @dev See {IERC165-supportsInterface}.
    */
   function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-    return interfaceId == type(IFVIdentityRegistry).interfaceId || super.supportsInterface(interfaceId);
+    return interfaceId == type(IE2EWalletRegistry).interfaceId || super.supportsInterface(interfaceId);
   }
 }

@@ -23,7 +23,7 @@ import {IE2EWalletRegistry} from "./interfaces/IE2EWalletRegistry.sol";
  * @dev Ownership changes flow back to the FVRegistry.
  */
 contract E2EWalletKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
-  IFVIdentityRegistry internal fvIdentityRegistry;
+  IE2EWalletRegistry internal fvIdentityRegistry;
 
   constructor() {
     _disableInitializers();
@@ -40,7 +40,7 @@ contract E2EWalletKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
 
     LSP6KeyManagerInitAbstract._initialize(target_);
 
-    fvIdentityRegistry = IFVIdentityRegistry(fvIdentityRegistry_);
+    fvIdentityRegistry = IE2EWalletRegistry(fvIdentityRegistry_);
   }
 
   /**
