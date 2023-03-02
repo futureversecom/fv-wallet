@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-interface IFVIdentityRegistry {
+interface IE2EWalletRegistry {
   /**
    * @notice Emitted when registering a new address.
    * @param owner The address of the owner registered for the identity.

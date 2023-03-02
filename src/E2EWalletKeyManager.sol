@@ -15,14 +15,14 @@ import {
 import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IFVIdentityRegistry} from "./interfaces/IFVIdentityRegistry.sol";
+import {IE2EWalletRegistry} from "./interfaces/IE2EWalletRegistry.sol";
 
 /**
  * @title Proxy implementation of a contract acting as a controller of an ERC725 Account, using permissions stored in the ERC725Y storage
  * @notice This implementation includes an owner which is the only account able to manage permissions and ownership.
  * @dev Ownership changes flow back to the FVRegistry.
  */
-contract FVKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
+contract E2EWalletKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
   IFVIdentityRegistry internal fvIdentityRegistry;
 
   constructor() {

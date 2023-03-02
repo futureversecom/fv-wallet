@@ -7,16 +7,16 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-import {IFVIdentityRegistry} from "./interfaces/IFVIdentityRegistry.sol";
-import {FVIdentity} from "./FVIdentity.sol";
-import {FVKeyManager} from "./FVKeyManager.sol";
+import {IE2EWalletRegistry} from "./interfaces/IE2EWalletRegistry.sol";
+import {E2EWallet} from "./E2EWallet.sol";
+import {E2EWalletKeyManager} from "./E2EWalletKeyManager.sol";
 import "./libraries/Utils.sol";
 
 /**
  * FV Identity Registry
  * A manager for user identities in the Futureverse ecosystem.
  */
-contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIdentityRegistry {
+contract E2EWalletRegistry is Initializable, OwnableUpgradeable, ERC165, IE2EWalletRegistry {
   UpgradeableBeacon public fvIdentityBeacon;
   UpgradeableBeacon public fvKeyManagerBeacon;
   mapping(address => address) internal managers;

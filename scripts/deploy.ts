@@ -5,16 +5,16 @@ dotenv.config();
 
 async function main() {
   // deploy FVIdentity contract
-  const fvAccountFactory = await ethers.getContractFactory("FVIdentity");
+  const fvAccountFactory = await ethers.getContractFactory("E2EWallet");
   const fvAccount = await fvAccountFactory.deploy();
   await fvAccount.deployed();
-  console.log("[contract] FVIdentity deployed to:", fvAccount.address);
+  console.log("[contract] E2EWallet deployed to:", fvAccount.address);
 
   // deploy FVKeyManager contract
-  const keyManagerFactory = await ethers.getContractFactory("FVKeyManager");
+  const keyManagerFactory = await ethers.getContractFactory("E2EWalletKeyManager");
   const fvKeyManager = await keyManagerFactory.deploy();
   await fvKeyManager.deployed();
-  console.log("[contract] FVKeyManager deployed to:", fvKeyManager.address);
+  console.log("[contract] E2EWalletKeyManager deployed to:", fvKeyManager.address);
 
   // deploy Utils library
   const utilsLibFactory = await ethers.getContractFactory("Utils");
@@ -22,16 +22,16 @@ async function main() {
   await utilsLib.deployed();
   console.log("[library] Utils deployed to:", utilsLib.address);
 
-  // deploy FVIdentityRegistry contract - with linked Utils library
-  const fvIdentityRegistryFactory = await ethers.getContractFactory("FVIdentityRegistry", {
+  // deploy E2EWalletRegistry contract - with linked Utils library
+  const fvIdentityRegistryFactory = await ethers.getContractFactory("E2EWalletRegistry", {
     libraries: { Utils: utilsLib.address, },
   });
   const fvIdentityRegistry = await fvIdentityRegistryFactory.deploy();
   await fvIdentityRegistry.deployed();
-  console.log("[contract] FVIdentityRegistry deployed to:", fvIdentityRegistry.address);
+  console.log("[contract] E2EWalletRegistry deployed to:", fvIdentityRegistry.address);
 
   // deploy TransparentUpgradeableProxy contract with PUBLIC_ADDRESS as admin
-  // initialize FVIdentityRegistry contract
+  // initialize E2EWalletRegistry contract
   const transparentUpgradeableProxyFactory = await ethers.getContractFactory("TransparentUpgradeableProxy");
   const transparentUpgradeableProxy = await transparentUpgradeableProxyFactory.deploy(
     fvIdentityRegistry.address,
