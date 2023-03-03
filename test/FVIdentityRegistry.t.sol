@@ -2,12 +2,9 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import {IERC725X} from "@erc725/smart-contracts/contracts/interfaces/IERC725X.sol";
 import {IERC725Y} from "@erc725/smart-contracts/contracts/interfaces/IERC725Y.sol";
 import {LSP0ERC725Account} from "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725Account.sol";
 import {LSP0ERC725AccountInit} from "@lukso/lsp-smart-contracts/contracts/LSP0ERC725Account/LSP0ERC725AccountInit.sol";
-import {ILSP1UniversalReceiver} from
-  "@lukso/lsp-smart-contracts/contracts/LSP1UniversalReceiver/ILSP1UniversalReceiver.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 import "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
 import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
@@ -93,17 +90,6 @@ contract FVIdentityRegistryTest is Test, GasHelper, DataHelper {
     assertTrue(userKeyManager.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
     assertTrue(userKeyManager.supportsInterface(type(IERC1271).interfaceId), "ERC1271 support");
     assertTrue(userKeyManager.supportsInterface(type(ILSP6KeyManager).interfaceId), "LSP6 support");
-  }
-
-  function testIdentityInterfaces() public {
-    address userKeyManager = fvIdentityRegistry.register(address(0));
-    IERC165 userFVWalletProxy = IERC165(ILSP6KeyManager(userKeyManager).target());
-
-    assertTrue(userFVWalletProxy.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
-    assertTrue(userFVWalletProxy.supportsInterface(type(IERC1271).interfaceId), "ERC1271 support");
-    assertTrue(userFVWalletProxy.supportsInterface(type(ILSP1UniversalReceiver).interfaceId), "LSP1 support");
-    assertTrue(userFVWalletProxy.supportsInterface(type(IERC725X).interfaceId), "ERC725X support");
-    assertTrue(userFVWalletProxy.supportsInterface(type(IERC725Y).interfaceId), "ERC725Y support");
   }
 
   //

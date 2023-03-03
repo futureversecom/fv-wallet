@@ -82,11 +82,7 @@ contract DataHelper {
   }
 
   // https://github.com/lukso-network/lsp-smart-contracts/blob/5f4b9a7b2e224f1536be8d5164f58b57016cafcd/tests/foundry/GasTests/UniversalProfileTestsHelper.sol#L51
-  function generateCompactByteArrayElement(bytes[] memory data)
-    public
-    pure
-    returns (bytes memory)
-  {
+  function generateCompactByteArrayElement(bytes[] memory data) public pure returns (bytes memory) {
     uint256 totalLength = 0;
     bytes memory concatenatedBytes = new bytes(0);
     for (uint256 i = 0; i < data.length; i++) {

@@ -6,7 +6,8 @@ import {
   InvalidERC725Function, NoPermissionsSet
 } from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Errors.sol";
 import {LSP6Utils} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Utils.sol";
-import {LSP6KeyManagerInitAbstract} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInitAbstract.sol";
+import {LSP6KeyManagerInitAbstract} from
+  "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6KeyManagerInitAbstract.sol";
 import {ILSP14Ownable2Step} from "@lukso/lsp-smart-contracts/contracts/LSP14Ownable2Step/ILSP14Ownable2Step.sol";
 import {
   EXECUTE_SELECTOR, SETDATA_SELECTOR, SETDATA_ARRAY_SELECTOR
@@ -69,9 +70,7 @@ contract FVKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
       _checkOwner();
     } else if (erc725Function == EXECUTE_SELECTOR) {
       bytes32 permissions = LSP6Utils.getPermissionsFor(ERC725Y(_target), from);
-      if (permissions == bytes32(0)) {
-        revert NoPermissionsSet(from);
-      }
+      if (permissions == bytes32(0)) revert NoPermissionsSet(from);
       _verifyCanExecute(from, permissions, payload);
     } else {
       revert InvalidERC725Function(erc725Function);

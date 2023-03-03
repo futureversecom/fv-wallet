@@ -42,9 +42,7 @@ library Utils {
 
   function stringToBytes32(string memory source) internal pure returns (bytes32 result) {
     bytes memory tempEmptyStringTest = bytes(source);
-    if (tempEmptyStringTest.length == 0) {
-      return 0x0;
-    }
+    if (tempEmptyStringTest.length == 0) return 0x0;
     assembly {
       result := mload(add(source, 32))
     }
@@ -55,13 +53,16 @@ library Utils {
   }
 
   function fromHexChar(uint8 c) internal pure returns (uint8) {
-    if (c > 47 && c < 58) { // 0-9
+    if (c > 47 && c < 58) {
+      // 0-9
       return c - 48;
     }
-    if (c > 96 && c < 103) { // a-f
+    if (c > 96 && c < 103) {
+      // a-f
       return c - 87;
     }
-    if (c > 64 && c < 71) { // A-F
+    if (c > 64 && c < 71) {
+      // A-F
       return c - 55;
     }
     revert("fail");
