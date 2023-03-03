@@ -61,9 +61,7 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    */
   function identityOf(address _addr) external view returns (address identity) {
     address keyManager = keyManagerOf(_addr);
-    if (keyManager == address(0)) {
-      return address(0);
-    }
+    if (keyManager == address(0)) return address(0);
     return FVKeyManager(keyManager).target();
   }
 
@@ -115,9 +113,7 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    * @return keyManager The registered key manager for the user.
    */
   function register(address _addr) public returns (address keyManager) {
-    if (managers[_addr] != address(0)) {
-      revert IdentityAlreadyExists(_addr);
-    }
+    if (managers[_addr] != address(0)) revert IdentityAlreadyExists(_addr);
 
     // deploy ERC725Account proxy
     BeaconProxy userFVIdentityProxy = new BeaconProxy(
@@ -149,12 +145,8 @@ contract FVIdentityRegistry is Initializable, OwnableUpgradeable, ERC165, IFVIde
    * @notice newOwner must not already have a key manager.
    */
   function updateKeyManagerOwner(address owner, address newOwner) external {
-    if (managers[owner] != msg.sender) {
-      revert InvalidCaller(msg.sender, managers[owner]);
-    }
-    if (managers[newOwner] != address(0)) {
-      revert IdentityAlreadyExists(newOwner);
-    }
+    if (managers[owner] != msg.sender) revert InvalidCaller(msg.sender, managers[owner]);
+    if (managers[newOwner] != address(0)) revert IdentityAlreadyExists(newOwner);
     delete managers[owner];
     managers[newOwner] = msg.sender;
     emit IdentityChanged(owner, newOwner, msg.sender);
