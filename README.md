@@ -69,7 +69,7 @@ note: This bytes4 interface id is calculated as the XOR of the interfaceId of th
 
 ### Deployment procedure
 
-The [deployment script](./scripts/deploy.ts) will perform the following actions:
+The [deployment script](./script/deploy.ts) will perform the following actions:
 
 ```mermaid
 sequenceDiagram
