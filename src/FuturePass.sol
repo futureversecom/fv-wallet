@@ -12,7 +12,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
  * @title Deployable Proxy Implementation of ERC725Account with late initialisation.
  * @dev Call initialize as soon as it is available.
  */
-contract FVIdentity is LSP0ERC725AccountInitAbstract, ERC721Holder, ERC1155Holder {
+contract FuturePass is LSP0ERC725AccountInitAbstract, ERC721Holder, ERC1155Holder {
   constructor() {
     _disableInitializers();
   }

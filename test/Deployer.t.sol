@@ -2,13 +2,13 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import {RegistryDeployer} from "../src/RegistryDeployer.sol";
+import {Deployer} from "../src/Deployer.sol";
 import "../src/libraries/Utils.sol";
 
 import "./helpers/GasHelper.t.sol";
 import "./helpers/MockContracts.t.sol";
 
-contract RegistryDeployerTest is Test, GasHelper {
+contract DeployerTest is Test, GasHelper {
   address private constant admin = address(0x000000000000000000000000000000000000dEaD);
 
   // re-declare event for assertions
@@ -17,8 +17,8 @@ contract RegistryDeployerTest is Test, GasHelper {
   function testDeployer() public {
     vm.expectEmit(false, false, false, false);
     emit Deployed(admin, admin, admin); // Values unchecked
-    startMeasuringGas("RegistryDeployer deployment");
-    new RegistryDeployer(admin);
+    startMeasuringGas("Deployer deployment");
+    new Deployer(admin);
     stopMeasuringGas();
   }
 }

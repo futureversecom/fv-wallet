@@ -51,21 +51,21 @@ note: This bytes4 interface id is calculated as the XOR of the interfaceId of th
 
 ![Alt text](./screenshots/architecture.svg)
 
-- The [FVIdentityRegistry](./src/FVIdentityRegistry.sol) is the core contract which is responsible for creating user digital identities/accounts
+- The [FuturePassIdentityRegistry](./src/FuturePassIdentityRegistry.sol) is the core contract which is responsible for creating user digital identities/accounts
   - It is deployed via TransparentUpgradableProxy pattern - to support future upgrades
   - note: We do not use hardhat upgrades lib to deploy the proxy, instead an EOA is simply set as the proxy owner (instead of a contract)
-- The [FVIdentity](./src/FVIdentity.sol) is a modified version of the LSP0/ERC725Account contract, this is the digital identity contract (responsible for on-chain actions/calls)
+- The [FuturePass](./src/FuturePass.sol) is a modified version of the LSP0/ERC725Account contract, this is the digital identity contract (responsible for on-chain actions/calls)
   - This is deployed as a logic contract (implementation which a beacon proxy would point to)
-- The [FVKeyManager](./src/FVKeyManager.sol) is modified version of the LSP6 contract, this is responsible for the permissions logic of the FVIdenttity contract
-- `UpgradableBeacon` - 2 upgradable beacons are deployed, which point to `FVIdentity` and `FVKeyManager` implementation contracts
-  - The beacon proxy pattern is used here (described [here](https://docs.openzeppelin.com/contracts/3.x/api/proxy)), this allows admin to upgrade all user accounts (FVIdentity and FVKeyManager) in case new functionality/fixes are to be introduced. This is a cost-effective approach to support mass-upgrades on all user accounts (with single TX)
-- The `register(address)` function is used to create new digital identity for an address
-  - This creates a `BeaconProxy` pointing to the `FVIdentity` upgradable beacon; inheriting logic of the `FVIdentity` contract
-  - This also creates a `BeaconProxy` pointing to the `FVKeyManager` upgradable beacon; inheriting logic of the `FVKeyManager` contract
-  - The proxies are setup such that the user's `FVKeyManager` proxy points to the `FVIdentity` (target) and the `FVIdentity` proxy owner is set to be the `FVKeyManager` proxy contract
-    - The owner of the `FVKeyManager` proxy is the EOA (address being registered)
-      - The `FVKeyManager` proxy contract is the only entrypoint into the `FVIdentity` proxy contract (user's digital identity)
-  - note: The proxies only hold state of the respective contracts, they are upgradable (upgrading beacon upgrades digital identity contract logic)
+- The [FuturePassKeyManager](./src/FuturePassKeyManager.sol) is modified version of the LSP6 contract, this is responsible for the permissions logic of the FVIdenttity contract
+- `UpgradableBeacon` - 2 upgradable beacons are deployed, which point to `FuturePass` and `FuturePassKeyManager` implementation contracts
+  - The beacon proxy pattern is used here (described [here](https://docs.openzeppelin.com/contracts/3.x/api/proxy)), this allows admin to upgrade all user accounts (FuturePass and FuturePassKeyManager) in case new functionality/fixes are to be introduced. This is a cost-effective approach to support mass-upgrades on all user accounts (with single TX)
+- The `register(address)` function is used to create new future pass for an address
+  - This creates a `BeaconProxy` pointing to the `FuturePass` upgradable beacon; inheriting logic of the `FuturePass` contract
+  - This also creates a `BeaconProxy` pointing to the `FuturePassKeyManager` upgradable beacon; inheriting logic of the `FuturePassKeyManager` contract
+  - The proxies are setup such that the user's `FuturePassKeyManager` proxy points to the `FuturePass` (target) and the `FuturePass` proxy owner is set to be the `FuturePassKeyManager` proxy contract
+    - The owner of the `FuturePassKeyManager` proxy is the EOA (address being registered)
+      - The `FuturePassKeyManager` proxy contract is the only entrypoint into the `FuturePass` proxy contract (user's digital identity)
+  - note: The proxies only hold state of the respective contracts, they are upgradable (upgrading beacon upgrades `FuturePass` contract logic)
 
 ### Deployment procedure
 
@@ -78,12 +78,12 @@ sequenceDiagram
   participant Admin as Admin EOA
   participant TRN as Root Network
 
-  Admin ->> TRN: Deploy FVIdentity logic contract
-  Admin ->> TRN: Deploy FVKeyManager logic contract
+  Admin ->> TRN: Deploy FuturePass logic contract
+  Admin ->> TRN: Deploy FuturePassKeyManager logic contract
   Admin ->> TRN: Deploy Utils Library
-  Admin ->> TRN: Deploy FVIdentityRegistry logic contract with linked Utils library
-  Admin ->> TRN: Deploy TransparentUpgradeableProxy with FVIdentityRegistry, initialize upon deployment 
-  TRN -->> TRN: deploy UpgradableBeacons, point implementations to FVIdentity and FVKeyManager contracts
+  Admin ->> TRN: Deploy FuturePassIdentityRegistry logic contract with linked Utils library
+  Admin ->> TRN: Deploy TransparentUpgradeableProxy with FuturePassIdentityRegistry, initialize upon deployment 
+  TRN -->> TRN: deploy UpgradableBeacons, point implementations to FuturePass and FuturePassKeyManager contracts
 ```
 
 ### User registration flow
@@ -93,15 +93,15 @@ sequenceDiagram
   title Account registration
 
   participant User
-  participant Registry as FVIdentityRegistry
+  participant Registry as FuturePassIdentityRegistry
 
   User ->> Registry: Calls register(address)
-  Registry -->> Registry: Deploy BeaconProxy (pointing to FVIdentity beacon impl)
-  Registry -->> Registry: Deploy BeaconProxy (pointing to FVKeyManager beacon impl)
-  Registry -->> Registry: Initialize FVKeyManager proxy with FVIdentity proxy as target
-  Registry -->> Registry: Initialize FVIdentity proxy with FVKeyManager proxy as owner (all permissions)
-  Registry -->> Registry: Register FVKeyManager proxy as the user addresses account manager
-  Registry ->> User: Emit IdentityRegistered and return FVKeyManager (proxy) address 
+  Registry -->> Registry: Deploy BeaconProxy (pointing to FuturePass beacon impl)
+  Registry -->> Registry: Deploy BeaconProxy (pointing to FuturePassKeyManager beacon impl)
+  Registry -->> Registry: Initialize FuturePassKeyManager proxy with FuturePass proxy as target
+  Registry -->> Registry: Initialize FuturePass proxy with FuturePassKeyManager proxy as owner (all permissions)
+  Registry -->> Registry: Register FuturePassKeyManager proxy as the user addresses account manager
+  Registry ->> User: Emit FuturePassRegistered and return FuturePassKeyManager (proxy) address 
 ```
 
 ## Setup
@@ -154,7 +154,7 @@ yarn deploy:local
 **Forge:**
 
 ```sh
-forge script script/RegistryDeployer.s.sol:Deployment --fork-url http://localhost:8545 --broadcast
+forge script script/Deployer.s.sol:Deployment --fork-url http://localhost:8545 --broadcast
 ```
 
 #### Prod deployment
@@ -169,7 +169,7 @@ yarn deploy:porcini
 
 ```sh
 source .env
-forge script script/RegistryDeployer.s.sol:Deployment --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
+forge script script/Deployer.s.sol:Deployment --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
 ```
 
 Note: The `--verify` flag will verify the deployed contracts on Etherscan.

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
-import {RegistryDeployer} from "../src/RegistryDeployer.sol";
+import {Deployer} from "../src/Deployer.sol";
 
 contract Deployment is Script {
   function run() external {
@@ -11,7 +11,7 @@ contract Deployment is Script {
 
     vm.startBroadcast(deployerPrivateKey);
 
-    new RegistryDeployer(admin);
+    new Deployer(admin);
 
     vm.stopBroadcast();
   }

@@ -6,8 +6,8 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {FVIdentity} from "../../src/FVIdentity.sol";
-import {FVKeyManager} from "../../src/FVKeyManager.sol";
+import {FuturePass} from "../../src/FuturePass.sol";
+import {FuturePassKeyManager} from "../../src/FuturePassKeyManager.sol";
 
 contract MockERC20 is ERC20 {
   constructor() ERC20("MyToken", "MTK") {}
@@ -72,7 +72,7 @@ contract UpgradedMock is Initializable {
 }
 
 /// @dev Key Manager with additional storage and functions
-contract MockKeyManagerUpgraded is FVKeyManager {
+contract MockKeyManagerUpgraded is FuturePassKeyManager {
   uint256 public val;
 
   function incrementVal() external {
@@ -81,7 +81,7 @@ contract MockKeyManagerUpgraded is FVKeyManager {
 }
 
 /// @dev Key Manager with additional storage and functions
-contract MockIdentityUpgraded is FVIdentity {
+contract MockIdentityUpgraded is FuturePass {
   uint256 public setDataCounter;
 
   function setData(bytes32 dataKey, bytes memory dataValue) public override onlyOwner {
