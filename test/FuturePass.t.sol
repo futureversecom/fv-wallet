@@ -13,10 +13,10 @@ import {ILSP1UniversalReceiver} from
 import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 import {ERC1155Holder, IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
-import {IFVIdentityRegistry} from "../src/interfaces/IFVIdentityRegistry.sol";
-import {FVIdentityRegistry} from "../src/FVIdentityRegistry.sol";
-import {FVIdentity} from "../src/FVIdentity.sol";
-import {FVKeyManager} from "../src/FVKeyManager.sol";
+import {IFuturePassIdentityRegistry} from "../src/interfaces/IFuturePassIdentityRegistry.sol";
+import {FuturePassIdentityRegistry} from "../src/FuturePassIdentityRegistry.sol";
+import {FuturePass} from "../src/FuturePass.sol";
+import {FuturePassKeyManager} from "../src/FuturePassKeyManager.sol";
 
 import "../src/libraries/Utils.sol";
 import "./helpers/MockContracts.t.sol";
@@ -25,37 +25,37 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
   address private constant ADMIN = address(0x000000000000000000000000000000000000dEaD);
   address private constant NON_ADMIN = address(0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045);
 
-  IFVIdentityRegistry public fvIdentityRegistry;
-  IFVIdentityRegistry private registryImpl;
-  FVIdentity private fvAccountImpl;
-  FVKeyManager private keyManagerImpl;
+  IFuturePassIdentityRegistry public futurePassIdentityRegistry;
+  IFuturePassIdentityRegistry private registryImpl;
+  FuturePass private futurePassImpl;
+  FuturePassKeyManager private keyManagerImpl;
 
   function setUp() public {
     // deploy upgradable contract
-    registryImpl = new FVIdentityRegistry();
+    registryImpl = new FuturePassIdentityRegistry();
 
     // deploy fv account implementation
-    fvAccountImpl = new FVIdentity();
+    futurePassImpl = new FuturePass();
 
     // deploy key manager implementation
-    keyManagerImpl = new FVKeyManager();
+    keyManagerImpl = new FuturePassKeyManager();
 
-    // deploy proxy with dead address as proxy admin, initialize upgradable identity registry
+    // deploy proxy with dead address as proxy admin, initialize upgradable future pass identity registry
     TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
       address(registryImpl),
       ADMIN,
-      abi.encodeWithSignature("initialize(address,address)", address(fvAccountImpl), address(keyManagerImpl))
+      abi.encodeWithSignature("initialize(address,address)", address(futurePassImpl), address(keyManagerImpl))
     );
 
     // note: admin can call additional functions on proxy
-    fvIdentityRegistry = FVIdentityRegistry(address(proxy)); // set proxy as fvIdentityRegistry
+    futurePassIdentityRegistry = FuturePassIdentityRegistry(address(proxy)); // set proxy as futurePassIdentityRegistry
   }
 
   //
   // Interfaces
   //
   function testIdentityInterfaces() public {
-    address userKeyManager = fvIdentityRegistry.register(address(0));
+    address userKeyManager = futurePassIdentityRegistry.register(address(0));
     IERC165 userFVWalletProxy = IERC165(ILSP6KeyManager(userKeyManager).target());
 
     assertTrue(userFVWalletProxy.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
@@ -69,9 +69,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
   //
   // ERC20 support
   //
-  function test_EOACanSendERC20ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_EOACanSendERC20ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(address(this)));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     MockERC20 mockERC20 = new MockERC20();
     mockERC20.mint(NON_ADMIN, 1000);
@@ -87,9 +87,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
     assertEq(mockERC20.balanceOf(address(wallet)), 1000);
   }
 
-  function test_ContractCanSendERC20ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(NON_ADMIN));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_ContractCanSendERC20ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(NON_ADMIN));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     MockERC20 mockERC20 = new MockERC20();
     mockERC20.mint(address(this), 1000);
@@ -103,9 +103,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
     assertEq(mockERC20.balanceOf(address(wallet)), 1000);
   }
 
-  function test_ContractCanMintERC20ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(NON_ADMIN));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_ContractCanMintERC20ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(NON_ADMIN));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     MockERC20 mockERC20 = new MockERC20();
     mockERC20.mint(address(wallet), 1000);
@@ -116,9 +116,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
   //
   // ERC721 support
   //
-  function test_EOACanSendERC721ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_EOACanSendERC721ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(address(this)));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     uint256 tokenId = 2;
     MockERC721 mockERC721 = new MockERC721();
@@ -136,9 +136,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
     assertEq(mockERC721.ownerOf(tokenId), address(wallet));
   }
 
-  function test_ContractCanSendERC721ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(NON_ADMIN));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_ContractCanSendERC721ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(NON_ADMIN));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     uint256 tokenId = 2;
     MockERC721 mockERC721 = new MockERC721();
@@ -154,9 +154,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
     assertEq(mockERC721.ownerOf(tokenId), address(wallet));
   }
 
-  function test_ContractCanMintERC721ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(NON_ADMIN));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_ContractCanMintERC721ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(NON_ADMIN));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     uint256 tokenId = 2;
     MockERC721 mockERC721 = new MockERC721();
@@ -169,9 +169,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
   //
   // ERC1155 support
   //
-  function test_EOACanSendERC1155ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(address(this)));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_EOACanSendERC1155ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(address(this)));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     uint256 tokenId = 2;
     uint256 tokenAmount = 2000;
@@ -189,9 +189,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
     assertEq(mockERC1155.balanceOf(address(wallet), tokenId), tokenAmount);
   }
 
-  function test_ContractCanSendERC1155ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(NON_ADMIN));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_ContractCanSendERC1155ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(NON_ADMIN));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     uint256 tokenId = 2;
     uint256 tokenAmount = 2000;
@@ -207,9 +207,9 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
     assertEq(mockERC1155.balanceOf(address(wallet), tokenId), tokenAmount);
   }
 
-  function test_ContractCanMintERC1155ToIdentity() public {
-    ILSP6KeyManager userKeyManager = ILSP6KeyManager(fvIdentityRegistry.register(NON_ADMIN));
-    FVIdentity wallet = FVIdentity(payable(userKeyManager.target()));
+  function test_ContractCanMintERC1155ToFuturePass() public {
+    ILSP6KeyManager userKeyManager = ILSP6KeyManager(futurePassIdentityRegistry.register(NON_ADMIN));
+    FuturePass wallet = FuturePass(payable(userKeyManager.target()));
 
     uint256 tokenId = 2;
     uint256 tokenAmount = 2000;

@@ -15,15 +15,15 @@ import {
 import {ERC725Y} from "@erc725/smart-contracts/contracts/ERC725Y.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {IFVIdentityRegistry} from "./interfaces/IFVIdentityRegistry.sol";
+import {IFuturePassIdentityRegistry} from "./interfaces/IFuturePassIdentityRegistry.sol";
 
 /**
  * @title Proxy implementation of a contract acting as a controller of an ERC725 Account, using permissions stored in the ERC725Y storage
  * @notice This implementation includes an owner which is the only account able to manage permissions and ownership.
  * @dev Ownership changes flow back to the FVRegistry.
  */
-contract FVKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
-  IFVIdentityRegistry internal fvIdentityRegistry;
+contract FuturePassKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
+  IFuturePassIdentityRegistry internal futurePassIdentityRegistry;
 
   constructor() {
     _disableInitializers();
@@ -31,16 +31,16 @@ contract FVKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
 
   /**
    * @notice Initiate the account with the address of the ERC725Account contract and sets LSP6KeyManager InterfaceId
-   * @param target_ The address of the ER725Account to control
-   * @param owner_ The owner address of the Key Manager
-   * @param fvIdentityRegistry_ The address of the FV Identity Registry
+   * @param _target The address of the ER725Account to control
+   * @param _owner The owner address of the Key Manager
+   * @param _futurePassIdentityRegistry The address of the Future Pass Identity Registry
    */
-  function initialize(address target_, address owner_, address fvIdentityRegistry_) external initializer {
-    _transferOwnership(owner_);
+  function initialize(address _target, address _owner, address _futurePassIdentityRegistry) external initializer {
+    _transferOwnership(_owner);
 
-    LSP6KeyManagerInitAbstract._initialize(target_);
+    LSP6KeyManagerInitAbstract._initialize(_target);
 
-    fvIdentityRegistry = IFVIdentityRegistry(fvIdentityRegistry_);
+    futurePassIdentityRegistry = IFuturePassIdentityRegistry(_futurePassIdentityRegistry);
   }
 
   /**
@@ -49,7 +49,7 @@ contract FVKeyManager is OwnableUpgradeable, LSP6KeyManagerInitAbstract {
    * @notice This can only be called by the current owner.
    */
   function transferOwnership(address newOwner) public override onlyOwner {
-    fvIdentityRegistry.updateKeyManagerOwner(owner(), newOwner);
+    futurePassIdentityRegistry.updateKeyManagerOwner(owner(), newOwner);
     _transferOwnership(newOwner);
   }
 
