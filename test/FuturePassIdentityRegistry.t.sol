@@ -81,7 +81,9 @@ contract futurePassIdentityRegistryTest is Test, GasHelper, DataHelper {
     IERC165 registry = IERC165(address(futurePassIdentityRegistry));
 
     assertTrue(registry.supportsInterface(type(IERC165).interfaceId), "ERC165 support");
-    assertTrue(registry.supportsInterface(type(IFuturePassIdentityRegistry).interfaceId), "FuturePassIdentityRegistry support");
+    assertTrue(
+      registry.supportsInterface(type(IFuturePassIdentityRegistry).interfaceId), "FuturePassIdentityRegistry support"
+    );
   }
 
   function testKeyManagerInterfaces() public {
@@ -123,8 +125,9 @@ contract futurePassIdentityRegistryTest is Test, GasHelper, DataHelper {
 
   function testfuturePassIdentityRegistryHasNoPermissions() public {
     LSP0ERC725Account fvIdentity = LSP0ERC725Account(payable(futurePassIdentityRegistry.futurePassAddr()));
-    bytes memory registryPermissions =
-      fvIdentity.getData(Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, address(futurePassIdentityRegistry)));
+    bytes memory registryPermissions = fvIdentity.getData(
+      Utils.permissionsKey(KEY_ADDRESSPERMISSIONS_PERMISSIONS_PREFIX, address(futurePassIdentityRegistry))
+    );
     assertEq(registryPermissions, bytes(""));
   }
 
@@ -758,7 +761,8 @@ contract futurePassIdentityRegistryTest is Test, GasHelper, DataHelper {
     address keyManagerv2 = Clones.clone(futurePassIdentityRegistry.keyManagerAddr());
 
     // update the impl of the beacon fails externally (not owner)
-    UpgradeableBeacon keyManagerBeacon = FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).keyManagerBeacon();
+    UpgradeableBeacon keyManagerBeacon =
+      FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).keyManagerBeacon();
     vm.expectRevert("Ownable: caller is not the owner");
     keyManagerBeacon.upgradeTo(keyManagerv2);
 
@@ -778,7 +782,8 @@ contract futurePassIdentityRegistryTest is Test, GasHelper, DataHelper {
     address keyManagerv2 = Clones.clone(futurePassIdentityRegistry.keyManagerAddr());
 
     // update the impl of the beacon succeeds
-    UpgradeableBeacon keyManagerBeacon = FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).keyManagerBeacon();
+    UpgradeableBeacon keyManagerBeacon =
+      FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).keyManagerBeacon();
     vm.expectEmit(true, false, false, false, address(keyManagerBeacon));
     emit Upgraded(keyManagerv2);
     FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).upgradeKeyManager(keyManagerv2);
@@ -818,7 +823,8 @@ contract futurePassIdentityRegistryTest is Test, GasHelper, DataHelper {
     address fvIdentityv2 = Clones.clone(futurePassIdentityRegistry.futurePassAddr());
 
     // update the impl of the beacon fails externally (not owner)
-    UpgradeableBeacon futurePassBeacon = FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).futurePassBeacon();
+    UpgradeableBeacon futurePassBeacon =
+      FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).futurePassBeacon();
     vm.expectRevert("Ownable: caller is not the owner");
     futurePassBeacon.upgradeTo(fvIdentityv2);
 
@@ -832,13 +838,15 @@ contract futurePassIdentityRegistryTest is Test, GasHelper, DataHelper {
 
   function testUpgradingFVIdentityImplSucceedsAsAdmin() public {
     // register a user, get the proxy address for user FV future pass
-    address userFVIdentityProxy = address(payable(FuturePassKeyManager(futurePassIdentityRegistry.register(address(this))).target()));
+    address userFVIdentityProxy =
+      address(payable(FuturePassKeyManager(futurePassIdentityRegistry.register(address(this))).target()));
 
     // create a clone of the future pass
     address fvIdentityv2 = Clones.clone(futurePassIdentityRegistry.futurePassAddr());
 
     // update the impl of the beacon succeeds
-    UpgradeableBeacon futurePassBeacon = FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).futurePassBeacon();
+    UpgradeableBeacon futurePassBeacon =
+      FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).futurePassBeacon();
     vm.expectEmit(true, false, false, false, address(futurePassBeacon));
     emit Upgraded(fvIdentityv2);
     FuturePassIdentityRegistry(address(futurePassIdentityRegistry)).upgradeFuturePass(fvIdentityv2);
