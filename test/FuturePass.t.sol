@@ -67,6 +67,21 @@ contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
   }
 
   //
+  // MISC
+  //
+  function test_getEOAFromFuturePass() public {
+    address eoa = address(this);
+
+    ILSP6KeyManager(futurePassIdentityRegistry.register(eoa));
+
+    FuturePass futurepass = FuturePass(payable(futurePassIdentityRegistry.futurePassOf(eoa)));
+    FuturePassKeyManager keyManager = FuturePassKeyManager(futurepass.owner());
+    address expectedEOA = address(keyManager.owner());
+
+    assertEq(eoa, expectedEOA);
+  }
+
+  //
   // ERC20 support
   //
   function test_EOACanSendERC20ToFuturePass() public {
