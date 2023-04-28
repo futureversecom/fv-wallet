@@ -11,6 +11,7 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {EIP191Signer} from "@lukso/lsp-smart-contracts/contracts/Custom/EIP191Signer.sol";
 import {ILSP1UniversalReceiver} from
   "@lukso/lsp-smart-contracts/contracts/LSP1UniversalReceiver/ILSP1UniversalReceiver.sol";
+import {LSP6_VERSION} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/LSP6Constants.sol";
 import {ILSP6KeyManager} from "@lukso/lsp-smart-contracts/contracts/LSP6KeyManager/ILSP6KeyManager.sol";
 import {ERC1155Holder, IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
@@ -20,10 +21,9 @@ import {FuturePass} from "../src/FuturePass.sol";
 import {FuturePassKeyManager} from "../src/FuturePassKeyManager.sol";
 
 import "../src/libraries/Utils.sol";
-import "./helpers/DataHelper.t.sol";
 import "./helpers/MockContracts.t.sol";
 
-contract FVIdentityRegistryTest is Test, DataHelper, ERC721Holder, ERC1155Holder {
+contract FVIdentityRegistryTest is Test, ERC721Holder, ERC1155Holder {
   address private constant ADMIN = address(0x000000000000000000000000000000000000dEaD);
   address private constant NON_ADMIN = address(0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045);
 
